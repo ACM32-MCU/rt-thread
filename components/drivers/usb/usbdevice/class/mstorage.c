@@ -15,6 +15,7 @@
 #include "drivers/usb_device.h"
 #include "mstorage.h"
 
+
 #ifdef RT_USING_DFS_MNTTABLE
 #include "dfs_fs.h"
 #endif
@@ -756,7 +757,7 @@ static rt_bool_t _cbw_verify(ufunction_t func, struct scsi_cmd* cmd,
     data = (struct mstorage*)func->user_data;
     if(cmd->cmd_len != cbw->cb_len)
     {
-        rt_kprintf("cb_len error\n");
+        rt_kprintf("cb_len error cmd %02X length-%02X cb_len %02X\n", cmd->cmd, cmd->cmd_len, cbw->cb_len);
         cmd->cmd_len = cbw->cb_len;
     }
 

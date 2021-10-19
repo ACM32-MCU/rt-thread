@@ -25,6 +25,7 @@
         SECTION .intvec:CODE:NOROOT(2)
 
         EXTERN  __iar_program_start
+        EXTERN  System_Core_Config
         PUBLIC  __vector_table
         PUBLIC  __Vectors
         PUBLIC  __Vectors_End
@@ -104,6 +105,8 @@ __Vectors_Size  EQU   __Vectors_End - __Vectors
         PUBWEAK Reset_Handler
         SECTION .text:CODE:NOROOT:REORDER(2)
 Reset_Handler
+        LDR     R0, =System_Core_Config
+        BLX     R0
         LDR     R0, =__iar_program_start
         BX      R0
 

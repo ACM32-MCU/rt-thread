@@ -320,10 +320,9 @@ HAL_StatusTypeDef HAL_LPUART_Wait_TX_Done(LPUART_HandleTypeDef *hlpuart)
 
 void HAL_LPUART_Output(LPUART_HandleTypeDef *hlpuart, unsigned char c)     
 {
-    if ((hlpuart->Instance->SR) & (1U << LPUART_SR_TX_EMPTY_INDEX) )  
-    {
-        hlpuart->Instance->TXDR = c;  
-    }
+    while (0 == (hlpuart->Instance->SR & (1U << LPUART_SR_TX_EMPTY_INDEX)) ) {};  
+
+    hlpuart->Instance->TXDR = c;  
 
     HAL_LPUART_Wait_TX_Done(hlpuart);   
 }

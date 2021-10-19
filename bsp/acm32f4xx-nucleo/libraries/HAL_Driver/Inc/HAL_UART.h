@@ -103,7 +103,7 @@
   * @{
   */
 #define UART_STOPBITS_1                     (0x00000000U)    /*!< UART frame with 1 stop bit    */
-#define UART_STOPBITS_2                     (0x00008000U)    /*!< UART frame with 2 stop bits   */
+#define UART_STOPBITS_2                     (0x00000008U)    /*!< UART frame with 2 stop bits   */
 /**
   * @}
   */
@@ -150,6 +150,11 @@
 #define UART_RX_FIFO_1_2              (0x00000010)        /*!< Receive  8 Data  */
 #define UART_RX_FIFO_3_4              (0x00000018)        /*!< Receive  12 Data */
 #define UART_RX_FIFO_7_8              (0x00000020)        /*!< Receive  14 Data */
+
+#define UART_TX_FIFO_LEVEL_INDEX     0   
+#define UART_RX_FIFO_LEVEL_INDEX     3  
+#define UART_FIFO_LEVEL_NUM          5  
+
 /**
   * @}
   */
@@ -240,7 +245,10 @@ typedef struct
 
 #define IS_UART_PARITY(__PARITY__)        (((__PARITY__) == UART_PARITY_NONE) || \
                                            ((__PARITY__) == UART_PARITY_EVEN) || \
-                                           ((__PARITY__) == UART_PARITY_ODD))
+                                           ((__PARITY__) == UART_PARITY_ODD)  || \
+                                           ((__PARITY__) == UART_PARITY_1)  || \
+                                           ((__PARITY__) == UART_PARITY_0) )  
+                                           
 
 #define IS_UART_MODE(__MODE__)            (((__MODE__) == UART_MODE_RX)          || \
                                            ((__MODE__) == UART_MODE_TX)          || \
@@ -291,10 +299,10 @@ HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *fu8_Data
 HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size, uint32_t fu32_Timeout);
 
 /* HAL_UART_Transmit_IT */
-HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size);
+HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size, uint32_t fifo_level);
 
 /* HAL_UART_Receive_IT */
-HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size);
+HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size, uint32_t fifo_level);
 
 /* HAL_UART_Transmit_DMA */
 HAL_StatusTypeDef HAL_UART_Transmit_DMA(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size);

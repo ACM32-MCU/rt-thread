@@ -742,7 +742,10 @@ HAL_StatusTypeDef HAL_DACEx_SelfCalibrate(DAC_HandleTypeDef *hdac, DAC_ChannelCo
     {
         /* Set candidate trimming */
         MODIFY_REG(hdac->Instance->CCR, (DAC_CCR_OTRIM1 << (Channel & 0x10UL)), (trimmingvalue << (Channel & 0x10UL)));
-        System_Delay_MS(1);
+        //System_Delay_MS(1);
+		
+		extern void rt_hw_delay_ms(uint32_t ms);
+		rt_hw_delay_ms(1);
         laststatus=nowstatus;
         nowstatus=(hdac->Instance->SR & (DAC_SR_CAL_FLAG1 << (Channel & 0x10UL)))>>(DAC_SR_CAL_FLAG1_Pos +Channel);
         /* tOFFTRIMmax delay x ms as per datasheet (electrical characteristics */

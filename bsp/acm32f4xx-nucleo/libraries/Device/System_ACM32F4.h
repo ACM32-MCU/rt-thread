@@ -23,12 +23,18 @@
 #endif
 /* ================================================================================ */
 
-#define PLLCLK_SRC_RC4M                      (0x00)   
-#define PLLCLK_SRC_XTH                       (0x01)  
+#define PLLCLK_SRC_RC4M                          (0x00)   
+#define PLLCLK_SRC_XTH_8M                        (0x01)  
+#define PLLCLK_SRC_XTH_12M                       (0x02)  
+#define PLL_SOURCE_FROM         (PLLCLK_SRC_RC4M)    
+
+#define CLK_SRC_RCH                          (0x00)   
+#define CLK_SRC_XTH                          (0x01)  
 
 #define DEFAULT_SYSTEM_CLOCK    (180000000)    // system clock frequency, 32M/64M/120M/180M
-#define PLL_SOURCE_FROM         (PLLCLK_SRC_RC4M) 
 
+
+ 
 /* CLK source Index */
 #define SYS_CLK_SRC_RCH                      (0x00)    // CLK source from RC64M
 #define SYS_CLK_SRC_RC32K                    (0x01)    // CLK source from RC32K
@@ -605,7 +611,10 @@ void System_SysTick_Init(void);
 uint32_t System_Get_SystemClock(void);
 
 /* System_Get_APBClock */
-uint32_t System_Get_APBClock(void);
+uint32_t System_Get_APBClock(void);  
+
+/* System_Get_Clk_Source */    
+uint32_t System_Get_Clk_Source(void);  
 
 /* System_Module_Reset */
 void System_Module_Reset(enum_RST_ID_t fe_ID_Index);

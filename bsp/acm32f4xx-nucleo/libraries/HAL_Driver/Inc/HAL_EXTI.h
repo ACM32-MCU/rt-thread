@@ -24,8 +24,8 @@
 #define EXTI_LINE_7                (0x000080)
 #define EXTI_LINE_8                (0x000100)
 #define EXTI_LINE_9                (0x000200)
-#define EXTI_LINE_10               (0x000300)
-#define EXTI_LINE_11               (0x000400)
+#define EXTI_LINE_10               (0x000400)
+#define EXTI_LINE_11               (0x000800)
 #define EXTI_LINE_12               (0x001000)
 #define EXTI_LINE_13               (0x002000)
 #define EXTI_LINE_14               (0x004000)
@@ -75,6 +75,7 @@
 #define EXTI_GPIOD                          0x00000003u
 #define EXTI_GPIOE                          0x00000004u
 #define EXTI_GPIOF                          0x00000005u
+#define EXTI_PERI                           0x00000010u    
 /**
   * @}
   */

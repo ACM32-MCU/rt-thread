@@ -12,8 +12,6 @@
 */
 #include "ACM32Fxx_HAL.h"
 
-extern ADC_HandleTypeDef ADC_Handle;
-
 /************************************************************************
  * function   : HAL_ADC_IRQHandler
  * Description: This function handles SPI interrupt request.
@@ -128,8 +126,8 @@ __weak void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
         { ADC_CHANNEL_12_EN, GPIOC, GPIO_PIN_2 },
         { ADC_CHANNEL_13_EN, GPIOC, GPIO_PIN_0 },
         { ADC_CHANNEL_VBAT_EN, GPIOA, GPIO_PIN_1 },
-        { ADC_CHANNEL_EXT2_EN, GPIOB, GPIO_PIN_1 },
-        { ADC_CHANNEL_EXT3_EN, GPIOB, GPIO_PIN_2 },
+        { ADC_CHANNEL_EXT2_EN, GPIOB, GPIO_PIN_0 },
+        { ADC_CHANNEL_EXT3_EN, GPIOB, GPIO_PIN_1 },
         { 0xffffffff, 0 }, //结束标志
     };    
     /* 
@@ -147,7 +145,7 @@ __weak void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
             GPIO_Handle.Pin            = ADC_Pin_Map[i][2];
             GPIO_Handle.Mode           = GPIO_MODE_ANALOG;
             GPIO_Handle.Pull           = GPIO_NOPULL;
-            HAL_GPIO_Init(ADC_Pin_Map[i][1], &GPIO_Handle);             
+            HAL_GPIO_Init((enum_GPIOx_t)(ADC_Pin_Map[i][1]), &GPIO_Handle);              
         }
     }
     
@@ -221,7 +219,7 @@ HAL_StatusTypeDef HAL_ADC_Init(ADC_HandleTypeDef* hadc)
     if(!IS_ADC_ALL_CLOCKDIV(hadc->Init.ClockDiv)) return HAL_ERROR;   
     if(!IS_ADC_ALL_CHANNELEN(hadc->Init.ChannelEn)) return HAL_ERROR;
     if(!IS_ADC_ALL_TRIG(hadc->Init.ExTrigMode.ExTrigSel)) return HAL_ERROR;
-    if(!IS_ADC_ALL_CHANNELEN(hadc->Init.ExTrigMode.JExTrigSel)) return HAL_ERROR;
+    if(!IS_ADC_ALL_TRIG(hadc->Init.ExTrigMode.JExTrigSel)) return HAL_ERROR;
     
     /* Init the low level hardware : GPIO, CLOCK, NVIC, DMA */
     HAL_ADC_MspInit(hadc);
@@ -354,7 +352,7 @@ HAL_StatusTypeDef HAL_ADC_ConfigChannel(ADC_HandleTypeDef* hadc, ADC_ChannelConf
         MODIFY_REG(hadc->Instance->JSQR,ADC_CH_MASK,sConfig->Channel);
     }
     
-    MODIFY_REG(hadc->Instance->SQR1,ADC_SQR1_L,(ADC_Handle.ChannelNum-1));
+    MODIFY_REG(hadc->Instance->SQR1,ADC_SQR1_L,(hadc->ChannelNum-1));
 
     /* Set the SMPR to every register*/
     if(sConfig->Channel <= ADC_CHANNEL_7) 

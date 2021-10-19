@@ -87,7 +87,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
 			/* Receive end */
 			while(huart->lu32_RxCount <huart->lu32_RxSize )
 			{
-				if(!READ_BIT(huart->Instance->FR, UART_FR_RXFE))
+				if(!READ_BIT(huart->Instance->FR, UART_FR_RXFE))// fifo not empty
 				{
 					 /* Store Data in buffer */
 					 huart->lu8_RxData[huart->lu32_RxCount++] = huart->Instance->DR;
@@ -97,6 +97,7 @@ void HAL_UART_IRQHandler(UART_HandleTypeDef *huart)
 			    {
 					break;
 			    }
+
                 if (read_bytes_number == huart->lu32_fifo_level_minus1)
                 {
                     break;
@@ -208,12 +209,13 @@ __weak void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
     /* For Example */
     GPIO_InitTypeDef    GPIO_Uart1;
+    GPIO_InitTypeDef    GPIO_Uart2;
 
     if (huart->Instance == UART1)
     {
         /* Enable Clock */
         System_Module_Enable(EN_UART1);
-        //System_Module_Enable(EN_GPIOAB);
+        System_Module_Enable(EN_GPIOAB);
 
         /* Initialization GPIO */
         /* A9:Tx  A10:Rx */
@@ -242,8 +244,25 @@ __weak void HAL_UART_MspInit(UART_HandleTypeDef *huart)
 
         /* NVIC Config */
         NVIC_ClearPendingIRQ(UART1_IRQn);
-        NVIC_SetPriority(UART1_IRQn, 5);
+        NVIC_SetPriority(UART1_IRQn, (1U << __NVIC_PRIO_BITS) - 2);
         NVIC_EnableIRQ(UART1_IRQn);
+    }
+    else if (huart->Instance == UART2)
+    {
+        /* Enable Clock */
+        System_Module_Enable(EN_UART2);
+        System_Module_Enable(EN_GPIOAB);
+        /* Initialization GPIO */
+        GPIO_Uart2.Pin       = GPIO_PIN_2 | GPIO_PIN_3;
+        GPIO_Uart2.Mode      = GPIO_MODE_AF_PP;
+        GPIO_Uart2.Pull      = GPIO_PULLUP;
+        GPIO_Uart2.Alternate = GPIO_FUNCTION_2;
+
+        HAL_GPIO_Init(GPIOA, &GPIO_Uart2);
+
+        NVIC_ClearPendingIRQ(UART2_IRQn);
+        NVIC_SetPriority(UART2_IRQn, (1U << __NVIC_PRIO_BITS) - 2);
+        NVIC_EnableIRQ(UART2_IRQn);
     }
 }
 
@@ -274,8 +293,7 @@ HAL_StatusTypeDef HAL_UART_Init(UART_HandleTypeDef *huart)
     UART_Config_BaudRate(huart);
 
     /* Set the UART Communication parameters */
-    //huart->Instance->LCRH = huart->Init.WordLength | UART_LCRH_FEN | huart->Init.StopBits | huart->Init.Parity;
-    huart->Instance->LCRH = huart->Init.WordLength | huart->Init.StopBits | huart->Init.Parity;
+    huart->Instance->LCRH = huart->Init.WordLength | UART_LCRH_FEN | huart->Init.StopBits | huart->Init.Parity;
     huart->Instance->CR = huart->Init.HwFlowCtl | huart->Init.Mode | UART_CR_UARTEN;
 
     if (huart->Init.Mode == UART_MODE_TX_RX_DEBUG)
@@ -305,6 +323,7 @@ __weak void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
     {
         /* Disable Clock */
         System_Module_Disable(EN_UART1);
+        System_Module_Reset(RST_UART1);
 
         /* DeInitialization GPIO */
         /* A9:Tx  A10:Rx */
@@ -324,11 +343,15 @@ __weak void HAL_UART_MspDeInit(UART_HandleTypeDef *huart)
 
         /* NVIC DeInit */
         NVIC_DisableIRQ(UART1_IRQn);
+        NVIC_ClearPendingIRQ(UART1_IRQn);
 
     }
 	else if(huart->Instance == UART2)
 	{
-
+        System_Module_Disable(EN_UART2);
+        System_Module_Reset(RST_UART2);
+        NVIC_DisableIRQ(UART2_IRQn);
+        NVIC_ClearPendingIRQ(UART2_IRQn);
 	}
 }
 
@@ -348,6 +371,22 @@ HAL_StatusTypeDef HAL_UART_DeInit(UART_HandleTypeDef *huart)
 
     /* DeInit the low level hardware : GPIO, CLOCK, NVIC */
     HAL_UART_MspDeInit(huart);
+
+    huart->lu32_RxCount = 0;
+    huart->lu32_RxSize = 0;
+    huart->lu8_RxBusy = false;
+    huart->lu8_TxBusy = false;
+    huart->lu32_TxCount = 0;
+    huart->lu32_TxSize = 0;
+    huart->ErrorCode = HAL_UART_ERROR_NONE;
+
+    huart->lu32_RxCount = 0;
+    huart->lu32_RxSize = 0;
+    huart->lu8_RxBusy = false;
+    huart->lu8_TxBusy = false;
+    huart->lu32_TxCount = 0;
+    huart->lu32_TxSize = 0;
+    huart->ErrorCode = HAL_UART_ERROR_NONE;
 
 	return HAL_OK;
 
@@ -475,7 +514,7 @@ HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *fu8_Data,
 * Output      :
 * Author      : Chris_Kyle                         Data : 2020
 **********************************************************************************/
-HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size)
+HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size, uint32_t fifo_level)
 {
 #if (USE_FULL_ASSERT == 1)
     if (!IS_UART_ALL_INSTANCE(huart->Instance))    return HAL_ERROR;
@@ -491,6 +530,11 @@ HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_D
         return HAL_ERROR;
     }
 
+    if ( (fifo_level >> UART_TX_FIFO_LEVEL_INDEX) > UART_FIFO_LEVEL_NUM)
+    {
+        return HAL_ERROR;
+    }
+
     huart->lu32_TxSize  = fu32_Size;
     huart->lu32_TxCount = 0;
     huart->lu8_TxData   = fu8_Data;
@@ -501,7 +545,7 @@ HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_D
     /* FIFO Enable */
     SET_BIT(huart->Instance->LCRH, UART_LCRH_FEN);
 	/*FIFO Select*/
-	SET_BIT(huart->Instance->IFLS,UART_TX_FIFO_1_2);
+    MODIFY_REG(huart->Instance->IFLS, UART_IFLS_TXIFLSEL, fifo_level);
 
     for(;;)
     {
@@ -534,9 +578,9 @@ HAL_StatusTypeDef HAL_UART_Transmit_IT(UART_HandleTypeDef *huart, uint8_t *fu8_D
 * Description : Receive an amount of data in interrupt mode.
 * Input       :
 * Output      :
-* Author      : Chris_Kyle                         Data : 2020
+* Author      : Chris_Kyle                         Date : 2021
 **********************************************************************************/
-HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size)
+HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size, uint32_t fifo_level)
 {
 #if (USE_FULL_ASSERT == 1)
     if (!IS_UART_ALL_INSTANCE(huart->Instance))    return HAL_ERROR;
@@ -552,6 +596,11 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Da
         return HAL_ERROR;
     }
 
+    if ( (fifo_level >> UART_RX_FIFO_LEVEL_INDEX) > UART_FIFO_LEVEL_NUM)
+    {
+        return HAL_ERROR;
+    }
+
     huart->lu32_RxSize  = fu32_Size;
     huart->lu32_RxCount = 0;
     huart->lu8_RxData   = fu8_Data;
@@ -562,8 +611,34 @@ HAL_StatusTypeDef HAL_UART_Receive_IT(UART_HandleTypeDef *huart, uint8_t *fu8_Da
     /* FIFO Enable */
     SET_BIT(huart->Instance->LCRH, UART_LCRH_FEN);
 	/*FIFO Select*/
-	MODIFY_REG(huart->Instance->IFLS, UART_IFLS_RXIFLSEL, UART_RX_FIFO_1_2);
-    huart->lu32_fifo_level_minus1 = 8-1;  // 16/2 - 1
+	MODIFY_REG(huart->Instance->IFLS, UART_IFLS_RXIFLSEL, fifo_level);
+
+    switch(fifo_level)
+    {
+        case UART_RX_FIFO_1_8:
+        huart->lu32_fifo_level_minus1  = 1;
+        break;
+
+        case UART_RX_FIFO_1_4:
+        huart->lu32_fifo_level_minus1  = 3;
+        break;
+
+        case UART_RX_FIFO_1_2:
+        huart->lu32_fifo_level_minus1  = 7;
+        break;
+
+        case UART_RX_FIFO_3_4:
+        huart->lu32_fifo_level_minus1  = 11;
+        break;
+
+        case UART_RX_FIFO_7_8:
+        huart->lu32_fifo_level_minus1  = 13;
+        break;
+
+        default:
+        huart->lu32_fifo_level_minus1 = 0;
+        break;
+    }
 	/* Enable the UART Errors interrupt */
 	SET_BIT(huart->Instance->IE,UART_IE_OEI|UART_IE_BEI|UART_IE_PEI|UART_IE_FEI);
     /* Enable RX and RTI interrupt */
@@ -701,7 +776,16 @@ static void UART_Config_BaudRate(UART_HandleTypeDef *huart)
     uint32_t lu32_IBAUD, lu32_FBAUD;
     uint64_t lu64_TempValue;
 
-    lu32_PCLK = System_Get_APBClock();
+    if (CLK_SRC_RCH == System_Get_Clk_Source() )
+    {
+        uint32_t  RCH_Real= *((uint32_t *)0x8022c);
+        uint32_t  RCH_Ratio= (RCH_Real*16)/64;      // RCH_Ratio = RCH_Real/64
+        lu32_PCLK = (System_Get_APBClock()/1000)*RCH_Ratio;
+    }
+    else
+    {
+        lu32_PCLK = System_Get_APBClock();
+    }
 
     /* Integral part */
     lu32_IBAUD = lu32_PCLK / (huart->Init.BaudRate * 16);
@@ -901,4 +985,3 @@ __weak int fputc(int ch, FILE *f)
     return ch;
 }
 #endif
-

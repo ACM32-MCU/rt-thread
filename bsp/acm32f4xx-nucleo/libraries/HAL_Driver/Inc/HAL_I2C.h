@@ -101,6 +101,11 @@
 /**
   * @}
   */
+  
+
+/**
+  * @}
+  */
 
 /** @defgroup SLAVE State machine
  *  @{
@@ -142,6 +147,13 @@ typedef enum
   SET = !RESET
 } FlagStatus, ITStatus;
 
+typedef enum 
+{
+    I2C_ERROR_NONE         = 0, 
+    I2C_TIMEOUT_BUS_ERROR  = 1,
+    I2C_OVERFLOW_ERROR     = 2, 
+} I2C_ERROR_STATUS;   
+
 typedef struct
 {
     uint32_t  I2C_Mode;               /* This parameter can be a value of @ref I2C_MODE */
@@ -152,7 +164,8 @@ typedef struct
     
     uint32_t  Own_Address;            /* This parameter can be a 7-bit address */
     
-    uint32_t  Clock_Speed;            /* This parameter can be a value of @ref CLOCK_SPEED */
+    uint32_t  Clock_Speed;            /* This parameter can be a value of @ref CLOCK_SPEED */ 
+    
 } I2C_InitTypeDef;
 
 /******************************** Check I2C Parameter *******************************/
@@ -187,6 +200,7 @@ typedef struct
     
     uint32_t               Rx_Count;         /* I2C Rx Count */
     uint32_t               Tx_Count;         /* I2C Tx Count */
+    uint32_t               Error_State;      /* I2C error state*/
 
     DMA_HandleTypeDef   *HDMA_Rx;          /* I2C Rx DMA handle parameters */
     DMA_HandleTypeDef   *HDMA_Tx;          /* I2C Tx DMA handle parameters */
@@ -249,5 +263,16 @@ uint8_t HAL_I2C_GetSlaveRxState(I2C_HandleTypeDef *hi2c);
 
 /* Function : HAL_I2C_GetSlaveTxState */
 uint8_t HAL_I2C_GetSlaveTxState(I2C_HandleTypeDef *hi2c);
+
+/* Function : HAL_I2C_Get_Error_Status */
+uint32_t HAL_I2C_Get_Error_Status(I2C_HandleTypeDef *hi2c);  
+
+/* Function : HAL_I2C_Clear_Error_Status */
+void HAL_I2C_Clear_Error_Status(I2C_HandleTypeDef *hi2c); 
+
+/* Function : HAL_I2C_Process_Error */  
+void HAL_I2C_Process_Error(I2C_HandleTypeDef *hi2c);  
+
+void HAL_I2C_Set_Filter_Parameter(I2C_HandleTypeDef *hi2c, uint32_t filter);   
 
 #endif

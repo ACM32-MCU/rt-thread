@@ -10,7 +10,8 @@
 #include "ACM32Fxx_HAL.h"
 
 uint32_t gu32_SystemClock;
-uint32_t gu32_APBClock;        
+uint32_t gu32_APBClock;      
+uint32_t gu32_Clocksrc = CLK_SRC_RCH;    
 
 /* System count in SysTick_Handler */
 volatile uint32_t gu32_SystemCount;
@@ -128,27 +129,126 @@ void System_Core_Config(void)
 
 
 /*********************************************************************************
+  System_Clock_Map={PLL_SOURCE , F_SystemClock ,PLL_F,PLL_N,PLL_M }
+* PLL_SOURCE：PLLCLK_SRC_RC4M   PLLCLK_SRC_XTH_8M   PLLCLK_SRC_XTH_12M 
+* F_SystemClock : Clock eg:180000000   120000000
+* PLL_F      : 0-63
+* PLL_N      : 0-7
+* PLL_M      : 0-15                     
+**********************************************************************************/    
+const uint32_t System_Clock_Map[][5] =//Fpll=(Fin* (PLL_F+12)/(PLL_N+1))/ (PLL_M+1)
+{ 
+    { PLLCLK_SRC_RC4M   ,  180000000, 33,0,0},   // Fpll=4*(33+12)/(0+1)/(0+1)=180
+    { PLLCLK_SRC_RC4M   ,  120000000, 18,0,0},   // Fpll=4*(18+12)/(0+1)/(0+1)=120
+    { PLLCLK_SRC_XTH_8M ,  180000000, 33,1,0},   // Fpll=8*(33+12)/(1+1)/(0+1)=180
+    { PLLCLK_SRC_XTH_8M ,  120000000, 18,1,0},   // Fpll=8*(18+12)/(1+1)/(0+1)=120
+    { PLLCLK_SRC_XTH_12M,  180000000, 18,1,0},   // Fpll=12*(18+12)/(1+1)/(0+1)=180
+    { PLLCLK_SRC_XTH_12M,  120000000, 18,2,0},   // Fpll=12*(18+12)/(2+1)/(0+1)=120
+    { 0xffffffff        ,        0 ,  0,0,0},    // end flag=0xffffffff   
+};
+
+/*********************************************************************************
+* Function    : Set_Pll_Div
+* Description : Set Pll Div
+* Input       : fu32_Clock: System core clock frequency, measured as Hz   
+                lu32_pll_src：PLL_SOURCE，can be PLLCLK_SRC_RC4M PLLCLK_SRC_XTH_8M PLLCLK_SRC_XTH_12M
+* Output      : 0: success, other value: fail reason  
+* Author      : cwt                         
+**********************************************************************************/    
+uint32_t Set_Pll_Div(uint32_t fu32_Clock,uint32_t lu32_pll_src)
+{
+    uint32_t i=0,u32_pll_F,u32_pll_N,u32_pll_M;
+    uint32_t u32_timeout=0,u32_result=1;
+    
+     /* if pll_src is XTH,need waid XTH READY*/
+    if(lu32_pll_src==PLLCLK_SRC_XTH_8M||lu32_pll_src==PLLCLK_SRC_XTH_12M)
+    {
+        SCU->XTHCR = SCU_XTHCR_XTH_EN | SCU_XTHCR_READYTIME_32768;
+        while (0 == (SCU->XTHCR & SCU_XTHCR_XTHRDY))
+        {     
+            if (u32_timeout == SYSTEM_TIMEOUT)
+            {
+                lu32_pll_src = PLLCLK_SRC_RC4M;     
+                gu32_Clocksrc = CLK_SRC_RCH;  
+                SCU->RCHCR |= SCU_RCHCR_RCH_DIV;   
+                while(!(SCU->RCHCR & SCU_RCHCR_RCHRDY));                  
+                break;     
+            }  
+            u32_timeout++;    
+        } 
+        
+        if (u32_timeout < SYSTEM_TIMEOUT) 
+        {
+            gu32_Clocksrc = CLK_SRC_XTH;  
+        }
+    }
+    else /* if pll_src is RCH,need waid RCH READY*/
+    {
+        SCU->RCHCR |= SCU_RCHCR_RCH_DIV;   
+        while(!(SCU->RCHCR & SCU_RCHCR_RCHRDY));  
+        gu32_Clocksrc = CLK_SRC_RCH;  
+    }
+    
+    /*Enable PLL*/
+    SCU->PLLCR |=  SCU_PLLCR_PLL_EN;
+    SCU->PLLCR &= ~(SCU_PLLCR_PLL_SLEEP);
+    while(!(SCU->PLLCR & SCU_PLLCR_PLL_FREE_RUN));
+    
+     /*SET PLL DIV*/
+    for(i = 0; System_Clock_Map[i][0] != 0xffffffff; i++)
+    {
+        if(System_Clock_Map[i][0]==lu32_pll_src && System_Clock_Map[i][1]==fu32_Clock)
+        {
+            u32_pll_F=System_Clock_Map[i][2];
+            u32_pll_N=System_Clock_Map[i][3];
+            u32_pll_M=System_Clock_Map[i][4];
+            
+            SCU->PLLCR = (SCU->PLLCR &(~(0x1FFFFU << 3))) | (u32_pll_F << 3) | (u32_pll_N << 12) | (u32_pll_M << 16);   
+            if(lu32_pll_src==PLLCLK_SRC_XTH_8M||lu32_pll_src==PLLCLK_SRC_XTH_12M)
+            {
+                SCU->PLLCR = (SCU->PLLCR & (~(0x3U << 1)) ) | (2 << 1); // select XTH  
+            }
+            else
+            {
+               SCU->PLLCR = (SCU->PLLCR & (~(0x3U << 1)) );   // select RC64M/16    
+            }
+            
+            SCU->PLLCR |= SCU_PLLCR_PLL_UPDATE_EN;   
+            while(!(SCU->PLLCR & (SCU_PLLCR_PLL_FREE_RUN) ) );  
+            
+            SCU->CCR1 = SCU_CCR1_SYS_PLL;  // configure system clock as PLL clock     
+            u32_result=0; 
+            
+            break;  
+        }
+    }
+    
+    return u32_result;    
+}
+
+/*********************************************************************************
 * Function    : System_Clock_Init
 * Description : Clock init
-* Input       : fu32_Clock: System core clock frequency, measured as Hz   
+* Input       : fu32_Clock: System core clock frequency, measured as Hz, could be 32MHz, 64MHz,
+                120MHz, 180Mhz                
 * Output      : 0: success, other value: fail reason  
 * Author      : xwl                         
-**********************************************************************************/
+**********************************************************************************/    
 bool System_Clock_Init(uint32_t fu32_Clock)
 {
-    volatile uint32_t lu32_sysdiv, lu32_pclkdiv, lu32_timeout, lu32_pll_src, lu32_pclk_div_para, lu32_result;     
-          
-    SET_EFC_RD_WAIT(RD_WAIT_ENSURE_OK)    
+    volatile uint32_t lu32_sysdiv, lu32_pclkdiv, lu32_timeout, lu32_pll_src, lu32_pclk_div_para,lu32_result;     
+             
     lu32_result = 0;  
-    lu32_pll_src = PLL_SOURCE_FROM;   
-       
+    lu32_pll_src = PLL_SOURCE_FROM;    
+    
+    SET_EFC_RD_WAIT(RD_WAIT_ENSURE_OK)     
     if(0 == (SCU->RCHCR & SCU_RCHCR_RCHRDY))  
     {
        SCU->RCHCR |=  SCU_RCHCR_RCH_EN;   
        while(0 == (SCU->RCHCR & SCU_RCHCR_RCHRDY));  // wait RCH ready         
     }
     SCU->CCR1 = 0;  // select RC64M as default  
-
+         
     if (fu32_Clock <= 64000000)  
     {
         if ((SCU->RCHCR) & SCU_RCHCR_RCH_DIV)
@@ -169,105 +269,16 @@ bool System_Clock_Init(uint32_t fu32_Clock)
             lu32_sysdiv = 1;  
             lu32_pclkdiv = 1;   
         }
-              
-        gu32_APBClock = gu32_SystemClock/lu32_pclkdiv;     
-    }
-    // select pll as system clock 
-    else
-    {
-        if (PLLCLK_SRC_RC4M == lu32_pll_src)
-        {
-            SCU->RCHCR |= SCU_RCHCR_RCH_DIV;   
-            while(!(SCU->RCHCR & SCU_RCHCR_RCHRDY));
-
-            SCU->PLLCR |=  SCU_PLLCR_PLL_EN;
-            SCU->PLLCR &= ~(SCU_PLLCR_PLL_SLEEP);
-            while(!(SCU->PLLCR & SCU_PLLCR_PLL_FREE_RUN));
-
-            switch(fu32_Clock)
-            {
-                case 180000000:  // 180M 
-                {
-                    SCU->PLLCR  = (SCU->PLLCR & ~(0xFFFF8)) | (33 << 3);
-                    SCU->PLLCR |= SCU_PLLCR_PLL_UPDATE_EN;  
-                    while(!(SCU->PLLCR & (SCU_PLLCR_PLL_FREE_RUN) ) );       
-
-                    lu32_sysdiv = 1;  
-                    lu32_pclkdiv = 2; // pclk = hclk/2 
-                }break;
-
-                case 120000000:  // 120M
-                {
-                    SCU->PLLCR  = (SCU->PLLCR & ~(0xFFFF8)) | (18U << 3);      
-                    SCU->PLLCR |= SCU_PLLCR_PLL_UPDATE_EN;  
-                    while(!(SCU->PLLCR & (SCU_PLLCR_PLL_FREE_RUN) ) );    
-
-                    lu32_sysdiv = 1;  
-                    lu32_pclkdiv = 2; // pclk = hclk/2
-                }break;
                 
-                default: lu32_result = 1; break; 
-            }
-            gu32_SystemClock = fu32_Clock;  
-            gu32_APBClock = gu32_SystemClock/lu32_pclkdiv;        
-            SCU->CCR1 = SCU_CCR1_SYS_PLL;  // configure system clock as PLL clock     
-        }
-        else if (SCU_XTHCR_XTH_EN == lu32_pll_src)   
-        {
-            lu32_timeout = 0;  
-        
-            SCU->XTHCR = SCU_XTHCR_XTH_EN | SCU_XTHCR_READYTIME_32768;
-            while (0 == (SCU->XTHCR & SCU_XTHCR_XTHRDY))
-            {     
-                if (lu32_timeout == SYSTEM_TIMEOUT)
-                {
-                    lu32_result = 2;  
-                    break;     
-                }  
-                lu32_timeout++;    
-            } 
-            
-            if  (0 == lu32_result)
-            {
-                SCU->PLLCR |=  SCU_PLLCR_PLL_EN;  
-                SCU->PLLCR &= ~(SCU_PLLCR_PLL_SLEEP);   
-                while(!(SCU->PLLCR & (SCU_PLLCR_PLL_FREE_RUN) ));     
-            
-                switch(fu32_Clock) 
-                {
-                    case 180000000:  // 180M 
-                    {
-                        SCU->PLLCR = (SCU->PLLCR &(~(0x1FFFFU << 3))) | (18U << 3) | (1U << 12) | (0U << 16);   
-                        SCU->PLLCR = (SCU->PLLCR & (~(0x3U << 1)) ) | (3 << 1);   
-                        SCU->PLLCR |= SCU_PLLCR_PLL_UPDATE_EN;   
-                        while(!(SCU->PLLCR & (SCU_PLLCR_PLL_FREE_RUN) ) );     
-                   
-                        lu32_sysdiv = 1;  
-                        lu32_pclkdiv = 2; // pclk = hclk/2  
-                    }break;
-
-                    case 120000000:  // 120M 
-                    {
-                        SCU->PLLCR = (SCU->PLLCR &(~(0x1FFFFU << 3))) | (18U << 3) | (2U << 12) | (0U << 16);   
-                        SCU->PLLCR = (SCU->PLLCR & (~(0x3U << 1)) ) | (3 << 1); // select XTH  
-                        SCU->PLLCR |= SCU_PLLCR_PLL_UPDATE_EN;   
-                        while(!(SCU->PLLCR & (SCU_PLLCR_PLL_FREE_RUN) ) );     
-                   
-                        lu32_sysdiv = 1;  
-                        lu32_pclkdiv = 2; // pclk = hclk/2  
-                    }break;
-               
-                    default: lu32_result = 1; break;  
-                }
-            }
-            gu32_SystemClock = fu32_Clock;  
-            gu32_APBClock = gu32_SystemClock/lu32_pclkdiv;        
-            SCU->CCR1 = SCU_CCR1_SYS_PLL;  // configure system clock as PLL clock   
-        }  
-        else
-        {
-            lu32_result = 3;    
-        }
+        gu32_Clocksrc = CLK_SRC_RCH;  
+    }
+   
+    else // select pll as system clock 
+    {
+        lu32_result=Set_Pll_Div(fu32_Clock,lu32_pll_src);
+        lu32_sysdiv = 1;  
+        lu32_pclkdiv = 2; // pclk = hclk/2   
+        gu32_SystemClock = fu32_Clock;      
     }
     
     if (0 == lu32_result)
@@ -287,9 +298,16 @@ bool System_Clock_Init(uint32_t fu32_Clock)
     }
     else
     {
-        lu32_sysdiv = 1;   
+        gu32_SystemClock = 64000000;  
+        lu32_sysdiv = 1; 
+        lu32_pclkdiv = 1;  
         lu32_pclk_div_para = 0;  
+        SCU->RCHCR &= (~SCU_RCHCR_RCH_DIV);    
+        while(!(SCU->RCHCR & SCU_RCHCR_RCHRDY));  
+        gu32_Clocksrc = CLK_SRC_RCH;  
     }
+    
+    gu32_APBClock = gu32_SystemClock/lu32_pclkdiv;         
   
     SCU->CCR2 = (SCU->CCR2 & (~0x7FFU)) | (lu32_sysdiv-1) | (lu32_pclk_div_para << 8);   
     while((SCU->CCR2 & SCU_CCR2_DIVDONE) == 0x00);  // wait divide done   
@@ -321,6 +339,18 @@ uint32_t System_Get_SystemClock(void)
 uint32_t System_Get_APBClock(void)
 {
     return gu32_APBClock;
+}
+
+/*********************************************************************************
+* Function    : System_Get_Clk_Source
+* Description : get clock source  
+* Input       : none 
+* Output      : CLK_SRC_RCH or CLK_SRC_XTH   
+* Author      : xwl                          
+**********************************************************************************/
+uint32_t System_Get_Clk_Source(void)
+{
+    return gu32_Clocksrc;
 }
 
 /*********************************************************************************
@@ -562,6 +592,7 @@ void System_Enter_Standby_Mode(void)
 {
     __set_PRIMASK(1);    // disable interrupt 
     SysTick->CTRL = 0;   // disable systick   
+    SCB->ICSR = BIT25;   // clear systick pending bit  
     SCU->STOPCFG |= BIT11;  // set PDDS=1  
     
     /* Set SLEEPDEEP bit of Cortex System Control Register */
@@ -578,7 +609,7 @@ void System_Enter_Standby_Mode(void)
 * Description : clear all stop setting and status 
 * Input       : none
 * Output      : none 
-* Author      : CWT                         Date : 2021?ê
+* Author      : CWT                         Date : 2021年
 **********************************************************************************/
 void System_Clear_Stop_Wakeup(void) 
 {
@@ -658,7 +689,7 @@ void System_Enter_Sleep_Mode(uint8_t SleepEntry)
 * Description : Get System Last Reset Reason
 * Input       : none 
 * Output      : RESET_REASON
-* Author      : CWT                         Date : 2021?ê
+* Author      : CWT                         Date : 2021年
 **********************************************************************************/
 RESET_REASON System_Return_Last_Reset_Reason(void)
 {
@@ -695,7 +726,7 @@ RESET_REASON System_Return_Last_Reset_Reason(void)
               div: div factor, if div = 80 then output buzzer freq=HCLK/80   
               enable: FUNC_DISABLE and FUNC_ENABLE      
 * Output      : none
-* Author      : xwl                         Date : 2021?¨o
+* Author      : xwl                         Date : 2021年
 **********************************************************************************/
 void System_Set_Buzzer_Divider(uint32_t div, FUNC_DISABLE_ENABLE enable)  
 {      
@@ -715,7 +746,7 @@ void System_Set_Buzzer_Divider(uint32_t div, FUNC_DISABLE_ENABLE enable)
 * Description : Configure USB PHY, such as clock select, pll...
 * Input       : none  
 * Output      : 0: fail, 1:success 
-* Author      : xwl                         Date : 2021?ê
+* Author      : xwl                         Date : 2021年
 **********************************************************************************/
 uint32_t System_USB_PHY_Config(void) 
 {

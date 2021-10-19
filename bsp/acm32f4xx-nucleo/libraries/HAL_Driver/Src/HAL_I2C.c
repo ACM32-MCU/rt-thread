@@ -13,22 +13,26 @@
 */
 #include  "ACM32Fxx_HAL.h" 
 
+#define I2C_TIMEOUT_COUNT          0x1000     
+#define I2C_TIMEOUT_IDLE_COUNT     0x100000    
+
 /* Private functions for I2C */
 static HAL_StatusTypeDef I2C_Set_Clock_Speed(I2C_HandleTypeDef *hi2c, uint32_t ClockSpeed);
 static HAL_StatusTypeDef I2C_Master_Request_Write(I2C_HandleTypeDef *hi2c, uint8_t DevAddress, uint32_t Timeout);
 static HAL_StatusTypeDef I2C_Master_Request_Read(I2C_HandleTypeDef *hi2c, uint8_t DevAddress, uint32_t Timeout);
 static HAL_StatusTypeDef I2C_Check_Device_Ready(I2C_HandleTypeDef *hi2c, uint8_t DevAddress, uint32_t Timeout);
 static HAL_StatusTypeDef I2C_WaitOnFlagUntilTimeout(I2C_HandleTypeDef *hi2c, uint32_t Flag, FlagStatus Status, uint32_t Timeout);
-/************************************************************************
+/********************************************************************************************
  * function   : HAL_I2C_IRQHandler
- * Description: This function handles I2C interrupt request.
+ * Description: This function handles I2C interrupt request, only applys for salve device.
  * input      : hi2c : pointer to a I2C_HandleTypeDef structure that contains
  *                     the configuration information for I2C module
- ************************************************************************/
+ ********************************************************************************************/
 __weak void HAL_I2C_IRQHandler(I2C_HandleTypeDef *hi2c)
 {
-    uint32_t i;
+    uint32_t i, timeout;  
     
+    timeout = 0;  
     /* Slave ADDR1 Interrupt */
     if (READ_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1))
     {
@@ -38,47 +42,59 @@ __weak void HAL_I2C_IRQHandler(I2C_HandleTypeDef *hi2c)
         /* Slave Transmit */
         if (READ_BIT(hi2c->Instance->SR, I2C_SR_SRW))
         {
-            i = 1;
-
-            /* Wait for transmission End*/
-            while(!READ_BIT(hi2c->Instance->SR, I2C_SR_MTF));
-            /* Clear MTF */
-            hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
-
+            i = 1;  // the first byte has fill into DR before to speed up transfer 
+            
             /* BUS BUSY */
             while(READ_BIT(hi2c->Instance->SR, I2C_SR_BUS_BUSY))
             {
-                if (i >= hi2c->Tx_Size && hi2c->Tx_Size != 0) 
+                
+                // if TX DR is empty, fill data into DR 
+                if (READ_BIT(hi2c->Instance->SR, I2C_SR_TXE))     
                 {
-                    break;
+                    hi2c->Instance->DR = hi2c->Tx_Buffer[i++];  
+                    if (hi2c->Instance->SR & I2C_SR_MTF) 
+                    {
+                        hi2c->Instance->SR = I2C_SR_MTF;  
+                        hi2c->Tx_Count++;    
+                    }                
+                    timeout = 0;  
                 }
-
-                if (READ_BIT(hi2c->Instance->SR, I2C_SR_MTF)) 
+                else
                 {
-                    /* Clear MTF */
-                    hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
-
+                    timeout++;
+                }                                   
+                
+                if ( (i >= hi2c->Tx_Size) && (hi2c->Tx_Size != 0) ) // check receive memory overflow or not 
+                {
+                    break; 
                 }
-
-                if (READ_BIT(hi2c->Instance->SR, I2C_SR_TXE))
+                
+                if (timeout >= I2C_TIMEOUT_IDLE_COUNT) 
                 {
-                    hi2c->Instance->DR = hi2c->Tx_Buffer[i++];
-                    hi2c->Tx_Count++;
+                    hi2c->Slave_TxState = SLAVE_TX_STATE_IDLE;  
+                    hi2c->Error_State = I2C_TIMEOUT_BUS_ERROR;   
+                    return;     
                 }
             }
             
-            /* Set Slave machine is DILE */
+            
+            /* Clear MTF */
+            hi2c->Instance->SR = I2C_SR_MTF; 
+            if ( (0 == hi2c->Tx_Size) && (hi2c->Tx_Count >= 2) )    
+            {
+                hi2c->Tx_Count = hi2c->Tx_Count - 2;   
+            }
+            else
+            {
+                hi2c->Tx_Count = hi2c->Tx_Size;   
+            }
+            /* Set Slave machine IDLE */
             hi2c->Slave_TxState = SLAVE_TX_STATE_IDLE;
         }
-        /* Slave Receive */
+        /* Slave Receive */  
         else 
         {
             i = 0;
-
-            /* Wait for transmission End*/
-            while(!READ_BIT(hi2c->Instance->SR, I2C_SR_MTF));
-            /* Clear MTF */
-            hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
 
             /* BUS BUSY */
             while(READ_BIT(hi2c->Instance->SR, I2C_SR_BUS_BUSY))
@@ -86,28 +102,65 @@ __weak void HAL_I2C_IRQHandler(I2C_HandleTypeDef *hi2c)
                 /* Receive Data */
                 if (READ_BIT(hi2c->Instance->SR, I2C_SR_RXNE))
                 {
-                    hi2c->Rx_Buffer[i++] = hi2c->Instance->DR;
-
-                    /* Wait for transmission End*/
-                    while(!READ_BIT(hi2c->Instance->SR, I2C_SR_MTF));
-                    /* Clear MTF */
-                    hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
-
-                    hi2c->Rx_Count++;
-
+                    timeout = 0;  
+                    hi2c->Rx_Buffer[i] = hi2c->Instance->DR;
+                                     
                     if (hi2c->Rx_Size != 0) 
                     {
                         if (i >= hi2c->Rx_Size) 
+                        {   
+                            SET_BIT(hi2c->Instance->CR, I2C_CR_TACK); 
+                        } 
+                        else
                         {
-                            break;
+                            i++;   
+                            hi2c->Rx_Count++;  
                         }
                     }
+                    else
+                    {
+                        i++;   
+                        hi2c->Rx_Count++; 
+                    }
+                }
+                else
+                {
+                    timeout++;  
+                }
+                
+                if (timeout >= I2C_TIMEOUT_IDLE_COUNT) 
+                {
+                    hi2c->Slave_TxState = SLAVE_TX_STATE_IDLE;  
+                    hi2c->Error_State = I2C_TIMEOUT_BUS_ERROR; 
+                    return;     
                 }
             }
+               
+            if (READ_BIT(hi2c->Instance->SR, I2C_SR_RXNE))
+            {
+                 if (i < hi2c->Rx_Size) 
+                 {
+                    hi2c->Rx_Buffer[i++] = hi2c->Instance->DR;  
+                    hi2c->Rx_Count++;
+                 }
+            }
             
-            /* Set Slave machine is DILE */
-            hi2c->Slave_RxState = SLAVE_RX_STATE_IDLE;
-        }
+            if (READ_BIT(hi2c->Instance->SR, I2C_SR_OVR)) 
+            {
+                hi2c->Slave_TxState = SLAVE_TX_STATE_IDLE;  
+                hi2c->Error_State = I2C_OVERFLOW_ERROR; 
+                return;   
+            }
+                    /* Clear MTF */
+            hi2c->Instance->SR = I2C_SR_MTF;   
+            
+            /* Set Slave machine IDLE */
+            hi2c->Slave_RxState = SLAVE_RX_STATE_IDLE;  
+            
+        } 
+        
+        /* Generate ACK by default*/   
+        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);            
 
         if (hi2c->Slave_RxState == SLAVE_RX_STATE_IDLE && hi2c->Slave_TxState == SLAVE_TX_STATE_IDLE) 
         {
@@ -151,13 +204,14 @@ __weak void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
     if (hi2c->Instance == I2C1)
     {
         /* Enable Clock */
+        System_Module_Reset(RST_I2C1);  
         System_Module_Enable(EN_I2C1);
         System_Module_Enable(EN_GPIOAB);
 
         /* I2C1 SDA  PortB Pin7 */
         /* I2C1 SCL  PortB Pin6 */
         GPIO_Handle.Pin            = GPIO_PIN_6 | GPIO_PIN_7;
-        GPIO_Handle.Mode           = GPIO_MODE_AF_PP;
+        GPIO_Handle.Mode           = GPIO_MODE_AF_OD;    
         GPIO_Handle.Pull           = GPIO_PULLUP;
         GPIO_Handle.Alternate      = GPIO_FUNCTION_6;
         HAL_GPIO_Init(GPIOB, &GPIO_Handle);
@@ -171,6 +225,23 @@ __weak void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
     /* I2C2 */
     else if (hi2c->Instance == I2C2) 
     {
+        System_Module_Reset(RST_I2C2);  
+        System_Module_Enable(EN_I2C2);  
+        System_Module_Enable(EN_GPIOAB);     
+
+        /* I2C2 SDA  PortB Pin14 */
+        /* I2C2 SCL  PortB Pin13 */
+        GPIO_Handle.Pin            = GPIO_PIN_13 | GPIO_PIN_14;
+        GPIO_Handle.Mode           = GPIO_MODE_AF_OD;    
+        GPIO_Handle.Pull           = GPIO_PULLUP;
+        GPIO_Handle.Alternate      = GPIO_FUNCTION_6;
+        HAL_GPIO_Init(GPIOB, &GPIO_Handle);
+        
+        /* Clear Pending Interrupt */
+        NVIC_ClearPendingIRQ(I2C2_IRQn);
+        
+        /* Enable External Interrupt */
+        NVIC_EnableIRQ(I2C2_IRQn);
     }
 }
 
@@ -187,7 +258,6 @@ __weak void HAL_I2C_MspDeInit(I2C_HandleTypeDef *hi2c)
     */
     
     /* For Example */
-    GPIO_InitTypeDef GPIO_Handle; 
     
     /* I2C1 */
     if (hi2c->Instance == I2C1)
@@ -207,6 +277,17 @@ __weak void HAL_I2C_MspDeInit(I2C_HandleTypeDef *hi2c)
     /* I2C2 */
     else if (hi2c->Instance == I2C2) 
     {
+        /* Disable Clock */
+        System_Module_Disable(EN_I2C2);
+
+        /* I2C2 SDA  PortB Pin14 */
+        /* I2C2 SCL  PortB Pin14 */
+        HAL_GPIO_DeInit(GPIOB, GPIO_PIN_13 | GPIO_PIN_14);
+        /* Clear Pending Interrupt */
+        NVIC_ClearPendingIRQ(I2C2_IRQn);
+        
+        /* Disable External Interrupt */
+        NVIC_DisableIRQ(I2C2_IRQn);
     }
 }
 
@@ -229,7 +310,11 @@ HAL_StatusTypeDef HAL_I2C_Init(I2C_HandleTypeDef *hi2c)
     CLEAR_BIT(hi2c->Instance->CR, I2C_CR_MEN); 
 
     /* Init the low level hardware : GPIO, CLOCK, NVIC */
-    HAL_I2C_MspInit(hi2c);
+    HAL_I2C_MspInit(hi2c); 
+    
+    hi2c->Error_State = I2C_ERROR_NONE;   
+    hi2c->Slave_RxState = SLAVE_RX_STATE_IDLE;
+    hi2c->Slave_TxState = SLAVE_TX_STATE_IDLE;   
 
     switch (hi2c->Init.I2C_Mode)
     {
@@ -256,7 +341,7 @@ HAL_StatusTypeDef HAL_I2C_Init(I2C_HandleTypeDef *hi2c)
         case I2C_MODE_SLAVE: 
         {
             SET_BIT(hi2c->Instance->CR, I2C_CR_TXE_SEL);
-
+              
             /* Set SDA auto change the direction */
             if (hi2c->Init.Tx_Auto_En == TX_AUTO_EN_ENABLE)
                 SET_BIT(hi2c->Instance->CR, I2C_CR_TX_AUTO_EN);
@@ -386,11 +471,77 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
     uint32_t i;
 
     /* Check I2C Parameter */
-    if (!IS_I2C_ALL_INSTANCE(hi2c->Instance))    return HAL_ERROR;
-    
+    if (!IS_I2C_ALL_INSTANCE(hi2c->Instance))    return HAL_ERROR; 
+       
     hi2c->Rx_Buffer = pData;
     hi2c->Rx_Size = Size;
-    hi2c->Rx_Count = 0;
+    hi2c->Rx_Count = 0; 
+    
+    if (1 == hi2c->Rx_Size)
+    {
+        __set_PRIMASK(1);    
+        if (I2C_Master_Request_Read(hi2c, DevAddress, Timeout) == HAL_OK) 
+        {
+              // disable interrupt  
+            if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_TX_RX_FLAG, RESET, Timeout) != HAL_OK) 
+            {
+                __set_PRIMASK(0);    // enable interrupt  
+                
+                return HAL_ERROR;
+            }
+            /* Clear TX_RX_FLAG */
+            hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_TX_RX_FLAG);
+            /* Generate ACK */
+            CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK); 
+            /* Prepare for Generate NACK */
+            SET_BIT(hi2c->Instance->CR, I2C_CR_TACK);
+            /* Prepare for Generate STOP */
+            SET_BIT(hi2c->Instance->CR, I2C_CR_STOP); 
+            
+             /* Wait RXNE Flag */
+            if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RXNE, RESET, Timeout) != HAL_OK) 
+            {          
+                __set_PRIMASK(0);    // enable interrupt    
+                
+                return HAL_ERROR;
+            }
+            
+            /* Read Data */
+            hi2c->Rx_Buffer[hi2c->Rx_Count++] = hi2c->Instance->DR;
+            /* Wait for transmission End*/
+            if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_MTF, RESET, Timeout) != HAL_OK) 
+            {           
+                __set_PRIMASK(0);    // enable interrupt    
+                
+                return HAL_ERROR;
+            }
+            /* Clear MTF */
+            hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
+        
+            /* Wait for the bus to idle */
+            if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_BUS_BUSY, SET, Timeout) != HAL_OK) 
+            {               
+                __set_PRIMASK(0);    // enable interrupt    
+                
+                return HAL_ERROR;
+            }
+
+            /* Generate ACK by default*/
+            CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);  
+            
+            __set_PRIMASK(0);    // enable interrupt  
+            
+            return HAL_OK;  
+          
+        }
+        else
+        {
+            __set_PRIMASK(0);   
+            
+            return HAL_ERROR;  
+        }
+    }
+    
     
     /* Send Read Access Request */
     if (I2C_Master_Request_Read(hi2c, DevAddress, Timeout) == HAL_OK)
@@ -400,9 +551,9 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
         /* Clear TX_RX_FLAG */
         hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_TX_RX_FLAG);
         /* Generate ACK */
-        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);
-
-        for (i = 0; i < hi2c->Rx_Size - 1; i++)
+        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK); 
+               
+        for (i = 0; i < hi2c->Rx_Size - 2; i++)
         {
             /* Wait RXNE Flag */
             if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RXNE, RESET, Timeout) != HAL_OK) return HAL_ERROR;
@@ -413,26 +564,53 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
             /* Clear MTF */
             hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
         }
-
+        
+        __set_PRIMASK(1);            
+        /* Wait RXNE Flag */
+        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RXNE, RESET, Timeout) != HAL_OK) 
+        {
+            __set_PRIMASK(0);   
+            
+            return HAL_ERROR;  
+        }
+        /* Read Data */
+        hi2c->Rx_Buffer[hi2c->Rx_Count++] = hi2c->Instance->DR; 
+        /* Wait for transmission End*/
+		if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_MTF, RESET, Timeout) != HAL_OK) return HAL_ERROR;
+		/* Clear MTF */
+		hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);		
         /* Prepare for Generate NACK */
         SET_BIT(hi2c->Instance->CR, I2C_CR_TACK);
-        /* Prepare for Generate STOP */
-        SET_BIT(hi2c->Instance->CR, I2C_CR_STOP);
+            /* Prepare for Generate STOP */
+        SET_BIT(hi2c->Instance->CR, I2C_CR_STOP); 
+        
+        __set_PRIMASK(0);    
+
 
         /* Wait RXNE Flag */
-        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RXNE, RESET, Timeout) != HAL_OK) return HAL_ERROR;
+        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RXNE, RESET, Timeout) != HAL_OK)  
+        {   
+            return HAL_ERROR;  
+        }
+        
         /* Read Data */
         hi2c->Rx_Buffer[hi2c->Rx_Count++] = hi2c->Instance->DR;
         /* Wait for transmission End*/
-        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_MTF, RESET, Timeout) != HAL_OK) return HAL_ERROR;
+        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_MTF, RESET, Timeout) != HAL_OK) 
+        { 
+            return HAL_ERROR;  
+        }
         /* Clear MTF */
         hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
         
         /* Wait for the bus to idle */
-        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_BUS_BUSY, SET, Timeout) != HAL_OK) return HAL_ERROR;
-
+        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_BUS_BUSY, SET, Timeout) != HAL_OK) 
+        { 
+            return HAL_ERROR;  
+        }
         /* Generate ACK */
-        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);
+        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK); 
+        
     }
     else
     {
@@ -442,76 +620,107 @@ HAL_StatusTypeDef HAL_I2C_Master_Receive(I2C_HandleTypeDef *hi2c, uint16_t DevAd
     return HAL_OK;
 }
 
-/************************************************************************
+/*****************************************************************************************
  * function   : HAL_I2C_Slave_Transmit
  * Description: Transmits in Slave mode an amount of data in blocking mode.
  * input      : hi2c : pointer to a I2C_HandleTypeDef structure that contains
  *                     the configuration information for I2C module
  *              pData      : Pointer to data buffer
- *              Size       : Amount of data to be sent
+ *              Size       : Amount of data to be sent, if Size=0, it means no limit
  *              Timeout    : Timeout value
- ************************************************************************/
+ *****************************************************************************************/
 HAL_StatusTypeDef HAL_I2C_Slave_Transmit(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint32_t Size, uint32_t Timeout)
 {
-    uint32_t i = 0;
+    uint32_t i = 0, delay_count;  
     
     /* Check I2C Parameter */
-    if (!IS_I2C_ALL_INSTANCE(hi2c->Instance))    return HAL_ERROR;
+    if (!IS_I2C_ALL_INSTANCE(hi2c->Instance))    return HAL_ERROR; 
     
     hi2c->Tx_Buffer = pData;
     hi2c->Tx_Size = Size;
     hi2c->Tx_Count = 0;
-
+    delay_count = 0;
+    
     /* Clear RX_ADDR1 Flag */    
     hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1);  
     /* Match the Address 1 */
-    if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RX_ADDR1, RESET, Timeout) != HAL_OK) return HAL_ERROR;
+    if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RX_ADDR1, RESET, I2C_TIMEOUT_COUNT) != HAL_OK) return HAL_ERROR;
     /* Clear RX_ADDR1 Flag */
-    hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1);
+    hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1);  
 
     /* Slave Transmit */
-    if (READ_BIT(hi2c->Instance->SR, I2C_SR_SRW))
+    if (READ_BIT(hi2c->Instance->SR, I2C_SR_SRW)) 
     {
         /* BUS BUSY */
         while(READ_BIT(hi2c->Instance->SR, I2C_SR_BUS_BUSY))
-        {
-            if (READ_BIT(hi2c->Instance->SR, I2C_SR_MTF)) 
+        {                     
+            // if TX DR is empty, fill data into DR 
+            if (READ_BIT(hi2c->Instance->SR, I2C_SR_TXE))     
             {
-                /* Clear MTF */
-                hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
-
-                hi2c->Tx_Count++;
-            }
-
-            if (READ_BIT(hi2c->Instance->SR, I2C_SR_TXE))
-            {
-                if (i < hi2c->Tx_Size || hi2c->Tx_Size == 0) 
+                hi2c->Instance->DR = hi2c->Tx_Buffer[i++];                          
+                delay_count = 0;   
+                if (hi2c->Instance->SR & I2C_SR_MTF)
                 {
-                    hi2c->Instance->DR = hi2c->Tx_Buffer[i++];
+                    hi2c->Tx_Count++; 
+                    hi2c->Instance->SR = I2C_SR_MTF;  
                 }
             }
+            else
+            {
+                delay_count++;
+            }  
+            
+            
+            if ( (i >= hi2c->Tx_Size) && (hi2c->Tx_Size != 0) ) // check receive memory overflow or not 
+            {
+                break; 
+            }
+            
+            if (delay_count >= (Timeout << 8) )   
+            {
+                hi2c->Error_State = I2C_TIMEOUT_BUS_ERROR;     
+                goto ERROR_PROCESS;  
+            }           
         }
-        hi2c->Instance->SR = READ_REG(hi2c->Instance->SR);
+              
     }
     else
     {
-        return HAL_ERROR;
+        return HAL_ERROR; 
     }
-
-    hi2c->Tx_Count--;
     
+    if (hi2c->Instance->SR & I2C_SR_OVR)
+    {
+        hi2c->Error_State = I2C_OVERFLOW_ERROR;  
+        goto ERROR_PROCESS;   
+    }
+    
+    //clear SR 
+    if ( (0 == Size) && (hi2c->Tx_Count) )      
+    {
+        hi2c->Tx_Count--;  
+    }
+    else
+    {
+        hi2c->Tx_Count = Size;  
+    }      
+    
+    hi2c->Instance->SR = READ_REG(hi2c->Instance->SR);  
     return HAL_OK;
+    
+    ERROR_PROCESS:  
+    return HAL_TIMEOUT;  
 }
 
-/************************************************************************
+/**********************************************************************************************
  * function   : HAL_I2C_Slave_Transmit_IT
  * Description: Transmit in slave mode an amount of data in non-blocking mode with Interrupt
  * input      : hi2c : pointer to a I2C_HandleTypeDef structure that contains
  *                     the configuration information for I2C module
  *              pData      : Pointer to data buffer
- *              Size       : Amount of data to be sent
+ *              Size       : Amount of data to be sent, if Size=0, it means no limit 
  * return     : HAL_StatusTypeDef
- ************************************************************************/
+ ************************************************************************************************/
 HAL_StatusTypeDef HAL_I2C_Slave_Transmit_IT(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint32_t Size)
 {
     /* Check I2C Parameter */
@@ -535,34 +744,35 @@ HAL_StatusTypeDef HAL_I2C_Slave_Transmit_IT(I2C_HandleTypeDef *hi2c, uint8_t *pD
     hi2c->Tx_Count++;
 
     /* Clear RX ADDR1 Flag */
-    SET_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1);
+    SET_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1 | I2C_SR_MTF);
     /* RX ADDR1 Interrupt Enable */
     SET_BIT(hi2c->Instance->CR, I2C_CR_RX_ADDR1_INT_EN);
     
     return HAL_OK;
 }
 
-/************************************************************************
+/****************************************************************************************
  * function   : HAL_I2C_Slave_Receive
  * Description: Receive in Slave mode an amount of data in blocking mode.
  * input      : hi2c : pointer to a I2C_HandleTypeDef structure that contains
  *                     the configuration information for I2C module
  *              pData : Pointer to data buffer
- *              Size  : Amount of data to be sent
+ *              Size  : Amount of data to be sent, if Size=0, it means no limit
  *              Timeout    : Timeout value
  * return     : HAL_StatusTypeDef
- ************************************************************************/
+ *****************************************************************************************/
 HAL_StatusTypeDef HAL_I2C_Slave_Receive(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint32_t Size, uint32_t Timeout)
 {
-    uint32_t i = 0;
-    HAL_StatusTypeDef Status;
+    uint32_t i, delay_count; 
     
     /* Check I2C Parameter */
     if (!IS_I2C_ALL_INSTANCE(hi2c->Instance))    return HAL_ERROR;;
     
+    i = 0; 
     hi2c->Rx_Buffer = pData;
     hi2c->Rx_Size = Size;
     hi2c->Rx_Count = 0;
+    delay_count = 0;  
     
     /* Match the Address 1 */
     if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_RX_ADDR1, RESET, Timeout) != HAL_OK) return HAL_ERROR;
@@ -572,56 +782,74 @@ HAL_StatusTypeDef HAL_I2C_Slave_Receive(I2C_HandleTypeDef *hi2c, uint8_t *pData,
     /* Slave Receive */
     if (!READ_BIT(hi2c->Instance->SR, I2C_SR_SRW))
     {
-        /* Wait for transmission End*/
-        if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_MTF, RESET, Timeout) != HAL_OK)  return HAL_ERROR;
-        /* Clear MTF */
-        hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
-
         /* BUS BUSY */
         while(READ_BIT(hi2c->Instance->SR, I2C_SR_BUS_BUSY))
         {
             /* Receive Data */
             if (READ_BIT(hi2c->Instance->SR, I2C_SR_RXNE))
             {
-                hi2c->Rx_Buffer[hi2c->Rx_Count++] = hi2c->Instance->DR;
+                delay_count = 0;   
+                hi2c->Rx_Buffer[i] = hi2c->Instance->DR;
                 
-                /* Wait for transmission End*/
-                if(I2C_WaitOnFlagUntilTimeout(hi2c, I2C_SR_MTF, RESET, Timeout) != HAL_OK)  return HAL_ERROR;
-                /* Clear MTF */
-                hi2c->Instance->SR = READ_BIT(hi2c->Instance->SR, I2C_SR_MTF);
-
                 if (hi2c->Rx_Size != 0) 
                 {
-                    if (hi2c->Rx_Count >= hi2c->Rx_Size) 
+                    if (i >= hi2c->Rx_Size) 
+                    {   
+                        SET_BIT(hi2c->Instance->CR, I2C_CR_TACK); 
+                    } 
+                    else
                     {
-                        break;
+                        i++;   
+                        hi2c->Rx_Count++;  
                     }
-                }
+                } 
+                else
+                {
+                    i++; 
+                    hi2c->Rx_Count++;   
+                }                                                
             }
+            else
+            {
+                delay_count++;  
+            } 
+            
+            if (delay_count >= I2C_TIMEOUT_IDLE_COUNT) 
+            {
+                hi2c->Error_State = I2C_TIMEOUT_BUS_ERROR;   
+                goto ERROR_PROCESS;   
+            }  
         }
-        
-        /* Generate ACK */
-        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);
-        
-        hi2c->Instance->SR = READ_REG(hi2c->Instance->SR);
     }
     /* Slave Transmit */
     else 
     {
-       return HAL_ERROR;
+       return HAL_ERROR;  
     }
-
+    
+    if (hi2c->Instance->SR & I2C_SR_OVR)
+    {
+        hi2c->Error_State = I2C_OVERFLOW_ERROR;  
+        goto ERROR_PROCESS;   
+    }
+    
+    /* Generate ACK by default*/   
+    CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);          
+    hi2c->Instance->SR = READ_REG(hi2c->Instance->SR);  
     return HAL_OK;
+    
+    ERROR_PROCESS:  
+    return HAL_TIMEOUT;  
 }
 
-/************************************************************************
+/************************************************************************************************
  * function   : HAL_I2C_Slave_Receive_IT
  * Description: Receive in slave mode an amount of data in non-blocking mode with Interrupt
  * input      : hi2c : pointer to a I2C_HandleTypeDef structure that contains
  *                     the configuration information for I2C module
  *              pData      : Pointer to data buffer
- *              Size       : Amount of data to be sent
- ************************************************************************/
+ *              Size       : Amount of data to be sent, if Size=0, it means no limit
+ *************************************************************************************************/
 HAL_StatusTypeDef HAL_I2C_Slave_Receive_IT(I2C_HandleTypeDef *hi2c, uint8_t *pData, uint32_t Size)
 {
     /* Check I2C Parameter */
@@ -639,7 +867,7 @@ HAL_StatusTypeDef HAL_I2C_Slave_Receive_IT(I2C_HandleTypeDef *hi2c, uint8_t *pDa
     hi2c->Rx_Count = 0;
     
     /* Clear RX ADDR1 Flag */
-    SET_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1);
+    SET_BIT(hi2c->Instance->SR, I2C_SR_RX_ADDR1 | I2C_SR_MTF);
     /* RX ADDR1 Interrupt Enable */
     SET_BIT(hi2c->Instance->CR, I2C_CR_RX_ADDR1_INT_EN);
     
@@ -1000,9 +1228,9 @@ static HAL_StatusTypeDef I2C_WaitOnFlagUntilTimeout(I2C_HandleTypeDef *hi2c, uin
     }
     else 
     {
-        lu32_Timeout = Timeout * 0xFF;
+        lu32_Timeout = Timeout << 8;
             
-        while (__HAL_I2C_GET_FLAG(hi2c, Flag)==Status)
+        while (__HAL_I2C_GET_FLAG(hi2c, Flag)==Status)                                                                                                                                                                                                                                                                                                                                                                                                                                                    while (__HAL_I2C_GET_FLAG(hi2c, Flag)==Status)
         {
             if (lu32_Timeout-- == 0) 
             {
@@ -1141,3 +1369,85 @@ static HAL_StatusTypeDef I2C_Check_Device_Ready(I2C_HandleTypeDef *hi2c, uint8_t
         return HAL_OK;
     }
 }
+
+/************************************************************************
+ * function   : HAL_I2C_Get_Error_Status
+ * Description: Get I2C error status 
+ * input      : hi2c  : pointer to a I2C_HandleTypeDef structure 
+ * output     : I2C_ERROR_STATUS  
+ ************************************************************************/
+uint32_t HAL_I2C_Get_Error_Status(I2C_HandleTypeDef *hi2c)
+{
+    return hi2c->Error_State;  
+}
+
+/************************************************************************
+ * function   : HAL_I2C_Clear_Error_Status
+ * Description: Set I2C error status to I2C_ERROR_NONE  
+ * input      : hi2c  : pointer to a I2C_HandleTypeDef structure 
+ * output     : none  
+ ************************************************************************/
+void HAL_I2C_Clear_Error_Status(I2C_HandleTypeDef *hi2c)
+{
+    hi2c->Error_State = I2C_ERROR_NONE;   
+}
+
+/*****************************************************************************************************
+ * function   : HAL_I2C_Process_Error
+ * Description: Process I2C commnunication timeout error 
+ * input      : hi2c  : pointer to a I2C_HandleTypeDef structure 
+ * output     : none  
+ *********************************************************************************************************/  
+void HAL_I2C_Process_Error(I2C_HandleTypeDef *hi2c)
+{
+    uint32_t delay_count;
+    
+    if ( (I2C_TIMEOUT_BUS_ERROR != hi2c->Error_State)&&(I2C_ERROR_NONE != hi2c->Error_State) )
+    {
+        delay_count = 0; 
+        while(READ_BIT(hi2c->Instance->SR, I2C_SR_BUS_BUSY))  
+        {
+            delay_count++;
+            if (delay_count >= (I2C_TIMEOUT_IDLE_COUNT) ) 
+            {
+                hi2c->Error_State = I2C_TIMEOUT_BUS_ERROR;   
+                /* Generate ACK by default*/    
+                CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);    
+                hi2c->Instance->SR = READ_REG(hi2c->Instance->SR);   
+                break;    
+            }
+        }
+        
+        hi2c->Slave_RxState = SLAVE_RX_STATE_IDLE;
+        hi2c->Slave_TxState = SLAVE_TX_STATE_IDLE; 
+        
+        if (delay_count < (I2C_TIMEOUT_IDLE_COUNT) ) 
+        {
+            HAL_I2C_Clear_Error_Status(hi2c);   
+        }         
+        /* Generate ACK by default*/    
+        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_TACK);  
+        CLEAR_BIT(hi2c->Instance->CR, I2C_CR_RX_ADDR1_INT_EN);           
+        // clear SR 
+        hi2c->Instance->SR = READ_REG(hi2c->Instance->SR);         
+        
+    }
+    
+    if (I2C_TIMEOUT_BUS_ERROR == hi2c->Error_State)
+    {
+        // configure SDA and SCL as input for a while to release I2C bus, then reinitiate I2C module below  
+    }
+} 
+
+
+/***************************************************************************************************************************
+ * function   : HAL_I2C_Set_Filter_Parameter
+ * Description: Write filter parameter to FILTER register. You can read application note to get suitable filter parameter. 
+ * input      : hi2c  : pointer to a I2C_HandleTypeDef structure 
+              : filter: filter parameter   
+ *********************************************************************************************************************************/  
+void HAL_I2C_Set_Filter_Parameter(I2C_HandleTypeDef *hi2c, uint32_t filter)
+{
+    hi2c->Instance->FILTER = filter;  
+}
+

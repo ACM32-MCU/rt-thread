@@ -1,9 +1,9 @@
 /***********************************************************************
- * Filename    : hal_lpuart.c
- * Description : lpuart driver source file
+ * Filename    : hal_fsusb.c
+ * Description : fsusb driver source file
  * Author(s)   : xwl  
- * version     : V1.0
- * Modify date : 2019-11-19
+ * version     : V1.1
+ * Modify date : 2021-09-10  
  ***********************************************************************/
 #include "ACM32Fxx_HAL.h"  
 
@@ -182,7 +182,7 @@ void HAL_FSUSB_Read_EP_MEM8(uint8_t *dst, uint32_t length, uint32_t fifo_offset,
 {
 	uint8_t *src;
 
-	src = (uint8_t *)(USB_BASE+0x200+(ep_index<<6)+fifo_offset);       
+	src = (uint8_t *)(USB_BASE+0x200+(ep_index<<6)+fifo_offset);
 	while(length--)
 	{
 		*dst++ = *src++;
@@ -212,16 +212,15 @@ uint8_t HAL_FSUSB_Start_EP_Transfer(uint32_t length,uint8_t ep_index)
 	while(1)
 	{
 		// if a new out data packet received, return error to caller  
-	    if( (USBINT->INT_STAT_RAW & MASK_EPX_OUT(ep_index)) && (USBINT->INT_STAT_RAW & MASK_EPX_ACK(ep_index)) )
+	    if( (HAL_FSUSB_GET_Interrupt_Status & MASK_EPX_OUT(ep_index)) && (HAL_FSUSB_GET_Interrupt_Status & MASK_EPX_ACK(ep_index)) )
 		{
-		    USBINT->INT_CLR  = MASK_EPX_OUT(ep_index);	
-	        USBINT->INT_CLR  = MASK_EPX_ACK(ep_index);
+            HAL_FSUSB_Clear_Interrupt(MASK_EPX_OUT(ep_index) | MASK_EPX_ACK(ep_index));  
 			return ERROR_OUT_OUT;
 		}
 		// wait for IN token to start transfer 
-        if(USBINT->INT_STAT_RAW & MASK_EPX_IN(ep_index) )
+        if(HAL_FSUSB_GET_Interrupt_Status & MASK_EPX_IN(ep_index) )
         {
-		    USBINT->INT_CLR  = MASK_EPX_IN(ep_index);
+            HAL_FSUSB_Clear_Interrupt(MASK_EPX_IN(ep_index));     
 			USBCTRL->WORKING_MODE  |= (1<<11);//return NAK when timeout
 			USBCTRL->EPxCSR[ep_index] |= (1<<10);//data is ready for tx
 			break;
@@ -233,27 +232,26 @@ uint8_t HAL_FSUSB_Start_EP_Transfer(uint32_t length,uint8_t ep_index)
 	{
 		if( USBCTRL->EPxCSR[ep_index]&0x1000000 ) //received ACK from host 
 		{
-			USBINT->INT_CLR  = MASK_EPX_ACK(ep_index);
-			USBINT->INT_CLR  = MASK_EPX_IN(ep_index);
+            HAL_FSUSB_Clear_Interrupt(MASK_EPX_ACK(ep_index) | MASK_EPX_IN(ep_index));     
 			return 0;//pass
 		}
 		
-		if(USBINT->INT_STAT_RAW & (1<<21) ) // timeout occurs when wait ACK 
+		if(HAL_FSUSB_GET_Interrupt_Status & (1<<21) ) // timeout occurs when wait ACK 
 		{
-            USBINT->INT_CLR  = (1<<21);
+            HAL_FSUSB_Clear_Interrupt(USB_IN_TIMEOUT);  
 			intoken_cnt = 4;
 			while(intoken_cnt) // wait 3 SOF frame for bad signal, during this time, device will send NACK when IN token received  
 			{               
-                if(USBINT->INT_STAT_RAW & (1<<3))				
+                if(HAL_FSUSB_GET_Interrupt_Status & (1<<3))				
 				{
-				    intoken_cnt --;
-					USBINT->INT_CLR  = (1<<3);
+				    intoken_cnt--;  
+                    HAL_FSUSB_Clear_Interrupt(USB_SOF);    
 				}
 			}
-			USBINT->INT_CLR  = MASK_EPX_TIMEOUT(ep_index); // device recover to send data packet after IN token received  		
+            HAL_FSUSB_Clear_Interrupt(MASK_EPX_TIMEOUT(ep_index));  // device recover to send data packet after IN token received  	  
 		}	
 		
-		if(USBINT->INT_STAT_RAW & MASK_EPX_OUT(ep_index))
+		if(HAL_FSUSB_GET_Interrupt_Status & MASK_EPX_OUT(ep_index))
 		{
 			return ERROR_IN_OUT; 
 		}		
@@ -312,43 +310,62 @@ uint8_t HAL_FSUSB_Send_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index)
 	return 0;  
 }
 
-
-void HAL_FSUSB_Receive_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index)  
+/*=================================================================================================================================
+  * @brief  receive length of data and save them into buffer by ep_index 
+  * @param  buffer, address of destination      
+  * @param  length, length of data to receive, if you don't know the specific value, you can use max vuale of one packet-64     
+  * @param  ep_index, index of endpoint 
+  * @param  single_packet, 0, receive wanted data as length; other value, receive one packet  
+  * @retval actual length of readout; if the high 16 bits is greater than low 16 bits, it indicates error.     
+=====================================================================================================================================*/        
+uint32_t HAL_FSUSB_Receive_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index, uint8_t single_packet)  
 {
-	uint32_t len;
+	volatile uint32_t fifo_len;
+    volatile uint32_t read_length;  
+    
+    read_length = length;  
+    
+	while(read_length > 0)	 
+	{			        
+        while (0 == (USBCTRL->EPxCSR[ep_index] & BIT20)) // out valid 
+        {
+            // wait 
+        }
 
-	while(length>0)	
-	{			
-		while(1)
-		{
-			// wait an out data packet and device has sent an ACK to HOST  
-			if( (USBINT->INT_STAT_RAW & MASK_EPX_OUT(ep_index)) && (USBINT->INT_STAT_RAW & MASK_EPX_ACK(ep_index)) )
-			{
-				break;
-			}
-		}		
-		USBINT->INT_CLR  = MASK_EPX_OUT(ep_index);	
-	    USBINT->INT_CLR  = MASK_EPX_ACK(ep_index);		
-		
+        HAL_FSUSB_Clear_Interrupt(MASK_EPX_OUT(ep_index) | MASK_EPX_ACK(ep_index));    
+		USBCTRL->EPxCSR[ep_index] |= BIT20; // clear out valid 
+                       
 		if( USBCTRL->EPxCSR[ep_index] & ( 1<< 19) )//Toggle error 
 		{
 		    USBCTRL->EPxCSR[ep_index] ^= (1<<17); //out toggle want
 			USBCTRL->EPxCSR[ep_index] |= (1<<18); //update want toggle; 
 			USBCTRL->EPxCSR[ep_index] |= 1<<11;   //set rx ready, wait for a new packet 
 			continue;  //discard this packet          			
-		}		
+		}	
 	
-		len	=HAL_FSUSB_Get_FIFO_Length(ep_index);
-		HAL_FSUSB_Read_EP_MEM8(buffer,len,0,ep_index);	
-		USBCTRL->EPxCSR[ep_index] |= 1<<11; //set rx ready to wait next packet 
+		fifo_len	=HAL_FSUSB_Get_FIFO_Length(ep_index);
+        if (read_length < fifo_len)
+        {
+            return ((fifo_len << 16) | read_length);     // error, app should read all data saved in fifo    
+        }
 
-		length -= len;
-		buffer += len;
-	}		
+        
+		HAL_FSUSB_Read_EP_MEM8(buffer,fifo_len,0,ep_index);	
+		read_length -= fifo_len;
+		buffer += fifo_len;     
+		USBCTRL->EPxCSR[ep_index] |= 1<<11; //set rx ready to wait next packet 
+        if (single_packet)
+        {
+            return fifo_len;   
+        } 
+        
+	}
+
+    return length;   
 } 
 
 
-//ep_index±íÊ¾¶Ëµã±àºÅ
+//ep_indexï¿½ï¿½Ê¾ï¿½Ëµï¿½ï¿½ï¿½
 void HAL_FSUSB_EP0_Send_Empty_Packet(void)
 {
 	HAL_FSUSB_Start_EP_Transfer(0,USB_EP0);    
@@ -359,11 +376,63 @@ void HAL_FSUSB_EP0_Send_Stall(void)
 	USBCTRL->EPxCSR[0] |= 1<<12;
 	while(!(USBCTRL->EPxCSR[0] &0x2000));
 	USBCTRL->EPxCSR[0] |= 0x2000;    
-}         
+} 
+
+void HAL_FSUSB_Enable_Interrupt(uint32_t Interrupt)
+{
+    USBINT->INT_EN |= Interrupt;   
+}
+
+void HAL_FSUSB_Disable_Interrupt(uint32_t Interrupt)
+{
+    USBINT->INT_EN &= (~Interrupt);     
+}  
+
+HAL_StatusTypeDef HAL_FSUSB_Check_Out_Packet(uint32_t ep_index)
+{
+    if(USBCTRL->EPxCSR[ep_index] & ( 1<< 19) )//Toggle error 
+    {
+        USBCTRL->EPxCSR[ep_index] ^= (1<<17); //out toggle want
+        USBCTRL->EPxCSR[ep_index] |= (1<<18); //update want toggle; 
+        USBCTRL->EPxCSR[ep_index] |= 1<<11;   //set rx ready, wait for a new packet    
+        
+        return HAL_ERROR; //not process this frame. device has sent response before     				
+    }		
+    
+    return HAL_OK;    
+}  
 
 
+void HAL_FSUSB_Bus_Reset(void)  
+{
+    USBCTRL->WORKING_MODE &= ~(1<<6);	//Res:transmit
+
+	if(!(USBCTRL->WORKING_MODE&0x08)) 	  
+	{
+		USBCTRL->WORKING_MODE  |=1<<2;
+		USBCTRL->WORKING_MODE  &=~(1<<2);    
+	}	
+
+	USBCTRL->EPxCSR[1] = 0x02100;			 //clear in/out toggle,stall,stall status
+	USBCTRL->EPxCSR[1]  |= (1<<18)|(1<<15); //enable change
+	USBCTRL->EPxCSR[2]  = 0x02100;	
+	USBCTRL->EPxCSR[2] |= (1<<18)|(1<<15);
+	USBCTRL->EPxCSR[3]  = 0x02100;
+	USBCTRL->EPxCSR[3] |= (1<<18)|(1<<15);
+	USBCTRL->EPxCSR[4] = 0x02100;
+	USBCTRL->EPxCSR[4] |= (1<<18)|(1<<15);   
+}    
 
 
+void HAL_FSUSB_Suspend(void)  
+{
+    USBCTRL->WORKING_MODE |= (1<<6)|(1<<4);	//Res:idle     
+}  
+
+void HAL_FSUSB_Resume(void)  
+{
+    USBCTRL->WORKING_MODE &= ~(1<<6);	//Res:transmit	       
+}
 
 
 

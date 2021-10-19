@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2021, RT-Thread Development Team
+ * Copyright (c) 2006-2022, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,5 +70,13 @@ void rt_hw_board_init(void)
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();
 #endif
+}
+
+void rt_hw_delay_ms(rt_uint32_t ms)
+{
+    rt_tick_t curMs = rt_tick_get_millisecond();
+    while(rt_tick_get_millisecond() - curMs < ms)
+    {
+    }
 }
 

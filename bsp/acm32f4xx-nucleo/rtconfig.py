@@ -24,14 +24,13 @@ elif CROSS_TOOL == 'keil':
     EXEC_PATH   = r'D:/Keil_v5'
 elif CROSS_TOOL == 'iar':
     PLATFORM    = 'iar'
-    EXEC_PATH   = r'D:/Program Files (x86)/IAR Systems/Embedded Workbench 8.2'
+    EXEC_PATH   = r'C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.4'
 
 if os.getenv('RTT_EXEC_PATH'):
     EXEC_PATH = os.getenv('RTT_EXEC_PATH')
 
 BUILD = 'debug'
 #BUILD = 'release'
-
 if PLATFORM == 'gcc':
     # toolchains
     PREFIX = 'arm-none-eabi-'
@@ -50,8 +49,8 @@ if PLATFORM == 'gcc':
     AFLAGS = ' -c' + DEVICE + ' -x assembler-with-cpp -Wa,-mimplicit-it=thumb '
     LFLAGS = DEVICE + ' -Wl,--gc-sections,-Map=rtthread.map,-cref,-u,Reset_Handler -T drivers/linker_scripts/link.lds'
 
-    CPATH = ''
-    LPATH = ''
+    CPATH = './build/gcc/Objects'
+    LPATH = './build/gcc/Listings'
 
     if BUILD == 'debug':
         CFLAGS += ' -O0 -gdwarf-2 -g'
@@ -61,7 +60,7 @@ if PLATFORM == 'gcc':
 
     CXXFLAGS = CFLAGS
 
-    POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
+    POST_ACTION = OBJCPY + ' -O binary $TARGET ./build/rt-thread-gcc.bin\n' + SIZE + ' $TARGET \n'
 
 elif PLATFORM == 'armclang':
     # toolchains
@@ -77,7 +76,7 @@ elif PLATFORM == 'armclang':
 
     AFLAGS = ' --cpu=Cortex-M33 --fpu=FPv5-SP --li --pd "__MICROLIB SETA 1" --pd "__UVISION_VERSION SETA 531" --pd "ARMCM33_DSP_FP SETA 1"'
 
-    LFLAGS = ' --cpu=Cortex-M33 --info sizes --info totals --info unused --info veneers --list ./build/ACM32F4.map --scatter ./build/ACM32F4.sct'
+    LFLAGS = ' --cpu=Cortex-M33 --info sizes --info totals --info unused --info veneers --list ./build/keil/rt-thread.map --scatter ./build/keil/rt-thread.sct'
     LFLAGS += ' --library_type=microlib --strict'
     LFLAGS += ' --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols'
 
@@ -89,7 +88,7 @@ elif PLATFORM == 'armclang':
     else:
         CFLAGS += ' -gdwarf-3 -O1'
 
-    POST_ACTION = 'fromelf --bin $TARGET --output rtthread.bin \nfromelf -z $TARGET'
+    POST_ACTION = 'fromelf --bin $TARGET --output ./build/rt-thread-keil.bin \nfromelf -z $TARGET'
 
 elif PLATFORM == 'iar':
     # toolchains
@@ -115,7 +114,7 @@ elif PLATFORM == 'iar':
     CFLAGS += ' --endian=little'
     CFLAGS += ' --cpu=' + CPU
     CFLAGS += ' -e'
-    CFLAGS += ' --fpu=VFPv4_sp'
+    CFLAGS += ' --fpu=VFPv5_sp'
     CFLAGS += ' --dlib_config "' + EXEC_PATH + '/arm/INC/c/DLib_Config_Normal.h"'
     CFLAGS += ' --silent'
 
@@ -124,7 +123,7 @@ elif PLATFORM == 'iar':
     AFLAGS += ' -w+'
     AFLAGS += ' -r'
     AFLAGS += ' --cpu ' + CPU
-    AFLAGS += ' --fpu VFPv4_sp'
+    AFLAGS += ' --fpu VFPv5_sp'
     AFLAGS += ' -S'
 
     if BUILD == 'debug':
@@ -141,7 +140,7 @@ elif PLATFORM == 'iar':
     CXXFLAGS = CFLAGS
 
     EXEC_PATH = EXEC_PATH + '/arm/bin/'
-    POST_ACTION = 'ielftool --bin $TARGET rtthread.bin'
+    POST_ACTION = 'ielftool --bin $TARGET rt-thread.bin'
 
 def dist_handle(BSP_ROOT, dist_dir):
     import sys

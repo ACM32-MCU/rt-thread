@@ -863,7 +863,7 @@ HAL_StatusTypeDef HAL_TIM_PWM_Output_Stop(TIM_TypeDef *TIMx, uint32_t Channel)
 {
 	if (0 == IS_TIM_CCX_INSTANCE(TIMx, Channel) )  
 	{
-		return 1;  // error parameter   
+		return HAL_ERROR;  // error parameter   
 	}
 
 	switch(Channel)
@@ -885,7 +885,7 @@ HAL_StatusTypeDef HAL_TIM_PWM_Output_Stop(TIM_TypeDef *TIMx, uint32_t Channel)
 		break;  
 		
 		default:
-			return 1;  
+			return HAL_ERROR;  
 	}
 
     if(IS_TIM_BREAK_INSTANCE(TIMx) != 0)  
@@ -1041,7 +1041,7 @@ HAL_StatusTypeDef HAL_TIMER_OC_Stop(TIM_TypeDef *TIMx, uint32_t Channel)
 {
 	if (0 == IS_TIM_CCX_INSTANCE(TIMx, Channel) )  
 	{
-		return 1;  // error parameter   
+		return HAL_ERROR;  // error parameter   
 	}
 
 	switch(Channel)
@@ -1063,7 +1063,7 @@ HAL_StatusTypeDef HAL_TIMER_OC_Stop(TIM_TypeDef *TIMx, uint32_t Channel)
 		break;  
 		
 		default:
-			return 1;  
+			return HAL_ERROR;  
 	}
 
     if(IS_TIM_BREAK_INSTANCE(TIMx) != 0)  

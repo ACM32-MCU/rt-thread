@@ -488,7 +488,9 @@ extern uint32_t HAL_TIMER_Base_Init(TIM_HandleTypeDef * htim);
 /* HAL_TIMER_Output_Config */ 
 extern uint32_t HAL_TIMER_Output_Config(TIM_TypeDef *TIMx, TIM_OC_InitTypeDef * Output_Config, uint32_t Channel);     
 /* HAL_TIMER_Base_Start */ 
-extern void HAL_TIMER_Base_Start(TIM_TypeDef *TIMx);    
+extern void HAL_TIMER_Base_Start(TIM_TypeDef *TIMx);
+/* HAL_TIMER_Base_Stop */
+extern HAL_StatusTypeDef HAL_TIMER_Base_Stop(TIM_TypeDef *TIMx);
 /* HAL_TIM_PWM_Output_Start */ 
 extern uint32_t HAL_TIM_PWM_Output_Start(TIM_TypeDef *TIMx, uint32_t Channel);   
 /* HAL_TIM_PWM_Output_Stop */    

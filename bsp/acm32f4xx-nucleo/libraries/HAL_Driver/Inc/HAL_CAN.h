@@ -91,6 +91,9 @@ typedef struct
     uint32_t CAN_SAM ;           /*!< Specifies the CAN operating mode.
                                 This parameter can be a value of 
                                 @ref CAN_SAM e.g:CAN_SAM_1time  CAN_SAM_3time*/
+                                
+    uint32_t CAN_ABOM ;          /*!< CAN BUF OFF ERROR RECOVER
+                                @ref CAN_ABOM e.g:CAN_ABOM_ENABLE  CAN_ABOM_DISABLE*/                          
 } CAN_InitTypeDef;
 
 
@@ -199,7 +202,7 @@ typedef enum {DISABLE = 0, ENABLE = !DISABLE} FunctionalState;
 
 #define IS_CAN_STDID(STDID)   ((STDID) <= ((uint32_t)0x7FF))
 #define IS_CAN_EXTID(EXTID)   ((EXTID) <= ((uint32_t)0x1FFFFFFF))
-#define IS_CAN_DLC(DLC)       ((DLC) <= ((uint8_t)0x08))
+#define IS_CAN_DLC(DLC)       ((DLC) <=   ((uint8_t)0x08))
 
 
 #define IS_CAN_GET_FLAG(FLAG) (((FLAG) == CAN_SR_RBS)  || ((FLAG) == CAN_SR_DOS)   || \
@@ -223,13 +226,24 @@ typedef enum {DISABLE = 0, ENABLE = !DISABLE} FunctionalState;
   */
 
 /**
+  * @defgroup CAN_ABOM 
+  * @{
+  */  
+#define CAN_ABOM_ENABLE         ((uint8_t)0x00) /*!< Normal mode */
+#define CAN_ABOM_DISABLE        ((uint8_t)0x01) /*!< SlefTest mode */
+/**
+  * @}
+  */
+
+
+/**
   * @defgroup CAN_Operating_Mode 
   * @{
   */  
 #define CAN_OperatingMode_Normal           ((uint8_t)0x00) /*!< Initialization mode */
 #define CAN_OperatingMode_Initialization   ((uint8_t)0x01) /*!< Normal mode */
 #define CAN_OperatingMode_Listen           ((uint8_t)0x02) /*!< Listen mode */
-#define CAN_OperatingMode_SelfTest           ((uint8_t)0x04) /*!< Listen mode */
+#define CAN_OperatingMode_SelfTest         ((uint8_t)0x04) /*!< Listen mode */
 #define CAN_OperatingMode_Sleep            ((uint8_t)0x10) /*!< sleep mode */
 
 

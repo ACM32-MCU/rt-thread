@@ -61,25 +61,50 @@ choice
         Refer to ACM32F403 DataSheet
 endchoice
 
-menu "ACM32F403RET7"
-    depends on SOC_ACM32F403RET7
+config SOC_SRAM_START_ADDR
+    hex
+    default 0x20000000
 
-    config SOC_SRAM_START_ADDR
-        hex "sram start address"
-        default 0x20000000
+config SOC_FLASH_START_ADDR
+    hex
+    default 0x00000000
 
-    config SOC_SRAM_SIZE
-        hex "sram size(KBytes)"
-        default 0xC0
+config SOC_PACKAGE_QFN32
+    depends on SOC_ACM32F403KCU7 || SOC_ACM32F403KEU7
+    bool
+    default y
+config SOC_PACKAGE_LQFP48
+    depends on SOC_ACM32F403CCT7 || SOC_ACM32F403CET7
+    bool
+    default y
+config SOC_PACKAGE_LQFP64
+    depends on SOC_ACM32F403RCT7 || SOC_ACM32F403RET7
+    bool
+    default y
+config SOC_PACKAGE_LQFP100
+    depends on SOC_ACM32F403VCT7 || SOC_ACM32F403VET7
+    bool
+    default y
 
-    config SOC_FLASH_START_ADDR
-        hex "EFlash Start Address"
-        default 0x00000000
+config SOC_SRAM_SIZE
+    depends on SOC_ACM32F403KCU7 || SOC_ACM32F403CCT7 ||  SOC_ACM32F403RCT7 || SOC_ACM32F403VCT7
+    hex
+    default 0x60
 
-    config SOC_FLASH_SIZE
-        hex "EFlash Size(KBytes)"
-        default 0x8000
-endmenu
+config SOC_SRAM_SIZE
+    depends on SOC_ACM32F403KEU7 || SOC_ACM32F403CET7 || SOC_ACM32F403RET7  || SOC_ACM32F403VET7
+    hex
+    default 0xC0
+
+config SOC_FLASH_SIZE
+    depends on SOC_ACM32F403KCU7 || SOC_ACM32F403CCT7 ||  SOC_ACM32F403RCT7 || SOC_ACM32F403VCT7
+    hex
+    default 0x100
+
+config SOC_FLASH_SIZE
+    depends on SOC_ACM32F403KEU7 || SOC_ACM32F403CET7 || SOC_ACM32F403RET7  || SOC_ACM32F403VET7
+    hex
+    default 0x200
 
 menu "Onboard Peripheral Drivers"
 
@@ -92,6 +117,7 @@ menu "On-chip Peripheral Drivers"
             bool "Enable GPIOAB"
             default y
             select RT_USING_PIN
+
         config BSP_USING_GPIO2
             bool "Enable GPIOCD"
             default y
@@ -108,6 +134,7 @@ menu "On-chip Peripheral Drivers"
         default n
 
     config BSP_USING_DAC
+        depends on SOC_ACM32F403CCT7 || SOC_ACM32F403CET7 || SOC_ACM32F403RCT7 || SOC_ACM32F403RET7 || SOC_ACM32F403VCT7 || SOC_ACM32F403VET7
         bool "Enable DAC"
         select RT_USING_DAC
         default n
@@ -177,8 +204,15 @@ menu "On-chip Peripheral Drivers"
     endmenu
 
     config BSP_USING_RTC
+        depends on SOC_ACM32F403CCT7 || SOC_ACM32F403CET7 || SOC_ACM32F403RCT7 || SOC_ACM32F403RET7 || SOC_ACM32F403VCT7 || SOC_ACM32F403VET7
         bool "Enable RTC"
         select RT_USING_RTC
+        default n
+    
+    config BSP_USING_ALARM
+        depends on BSP_USING_RTC
+        bool "Enable RTC Alarm"
+        select RT_USING_ALARM
         default n
 
     config BSP_USING_LPUART
@@ -191,10 +225,29 @@ menu "On-chip Peripheral Drivers"
             bool "Enable I2C1"
             default n
             select RT_USING_I2C
+        if BSP_USING_I2C1
+            config BSP_I2C1_RX_USING_DMA
+                bool "Enable I2C1 RX DMA"
+                default n
+
+            config BSP_I2C1_TX_USING_DMA
+                bool "Enable I2C1 TX DMA"
+                default n
+        endif
+
         config BSP_USING_I2C2
             bool "Enable I2C2"
             default n
             select RT_USING_I2C
+        if BSP_USING_I2C2
+            config BSP_I2C2_RX_USING_DMA
+                bool "Enable I2C2 RX DMA"
+                default n
+
+            config BSP_I2C2_TX_USING_DMA
+                bool "Enable I2C2 TX DMA"
+                default n
+        endif
     endmenu
 
     menu "Hardware I2S"
@@ -220,18 +273,101 @@ menu "On-chip Peripheral Drivers"
             bool "Enable Timer1"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM1
+            config BSP_USING_PWM1
+                bool "Enable PWM1"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM1
+                    config BSP_USING_PWM1_CH1
+                        bool "Enable PWM1 channel 1"
+                        default y
+                    config BSP_USING_PWM1_CH2
+                        bool "Enable PWM1 channel 2"
+                        default y
+                    config BSP_USING_PWM1_CH3
+                        bool "Enable PWM1 channel 3"
+                        default y
+                    config BSP_USING_PWM1_CH4
+                        bool "Enable PWM1 channel 4"
+                        default y
+                endif
+        endif
+
         config BSP_USING_TIM2
             bool "Enable Timer2"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM2
+            config BSP_USING_PWM2
+                bool "Enable PWM2"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM2
+                    config BSP_USING_PWM2_CH1
+                        bool "Enable PWM2 channel 1"
+                        default y
+                    config BSP_USING_PWM2_CH2
+                        bool "Enable PWM2 channel 2"
+                        default y
+                    config BSP_USING_PWM2_CH3
+                        bool "Enable PWM2 channel 3"
+                        default y
+                    config BSP_USING_PWM2_CH4
+                        bool "Enable PWM2 channel 4"
+                        default y
+                endif
+        endif
         config BSP_USING_TIM3
             bool "Enable Timer3"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM3
+            config BSP_USING_PWM3
+                bool "Enable PWM3"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM3
+                    config BSP_USING_PWM3_CH1
+                        bool "Enable PWM3 channel 1"
+                        default y
+                    config BSP_USING_PWM3_CH2
+                        bool "Enable PWM3 channel 2"
+                        default y
+                    config BSP_USING_PWM3_CH3
+                        bool "Enable PWM3 channel 3"
+                        default y
+                    config BSP_USING_PWM3_CH4
+                        bool "Enable PWM3 channel 4"
+                        default y
+                endif
+        endif
+
         config BSP_USING_TIM4
             bool "Enable Timer4"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM4
+            config BSP_USING_PWM4
+                bool "Enable PWM4"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM4
+                    config BSP_USING_PWM4_CH1
+                        bool "Enable PWM4 channel 1"
+                        default y
+                    config BSP_USING_PWM4_CH2
+                        bool "Enable PWM4 channel 2"
+                        default y
+                    config BSP_USING_PWM4_CH3
+                        bool "Enable PWM4 channel 3"
+                        default y
+                    config BSP_USING_PWM4_CH4
+                        bool "Enable PWM4 channel 4"
+                        default y
+                endif
+        endif
+
         config BSP_USING_TIM6
             bool "Enable Timer6"
             default n
@@ -244,18 +380,67 @@ menu "On-chip Peripheral Drivers"
             bool "Enable Timer14"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM14
+            config BSP_USING_PWM14
+                bool "Enable PWM14"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM14
+                    config BSP_USING_PWM14_CH1
+                        bool
+                        default y
+                endif
+        endif
         config BSP_USING_TIM15
             bool "Enable Timer15"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM15
+            config BSP_USING_PWM15
+                bool "Enable PWM15"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM15
+                    config BSP_USING_PWM15_CH1
+                        bool "Enable PWM15 channel 1"
+                        default y
+                    config BSP_USING_PWM15_CH2
+                        bool "Enable PWM15 channel 2"
+                        default y
+                endif
+        endif
+
         config BSP_USING_TIM16
             bool "Enable Timer16"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM16
+            config BSP_USING_PWM16
+                bool "Enable PWM16"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM16
+                    config BSP_USING_PWM16_CH1
+                        bool
+                        default y
+                endif
+        endif
+
         config BSP_USING_TIM17
             bool "Enable Timer17"
             default n
             select RT_USING_HWTIMER
+        if BSP_USING_TIM17
+            config BSP_USING_PWM17
+                bool "Enable PWM17"
+                default n
+                select RT_USING_PWM
+                if BSP_USING_PWM17
+                    config BSP_USING_PWM17_CH1
+                        bool
+                        default y
+                endif
+        endif
     endmenu
 
     menu "Hardware WDT"
@@ -320,6 +505,7 @@ menu "On-chip Peripheral Drivers"
         endif
 
         config BSP_USING_SPI4
+            depends on SOC_ACM32F403RCT7 || SOC_ACM32F403RET7 || SOC_ACM32F403VCT7 || SOC_ACM32F403VET7
             bool "Enable SPI4"
             select RT_USING_SPI
             default n
@@ -338,20 +524,36 @@ menu "On-chip Peripheral Drivers"
     menu "Hardware CRYPTO"
         config BSP_USING_CRC
             select RT_HWCRYPTO_USING_CRC
+            select RT_USING_HWCRYPTO
             bool "Enable CRC"
             default n
-            select RT_USING_HWCRYPTO
+
         config BSP_USING_AES
             select RT_HWCRYPTO_USING_AES
+            select RT_HWCRYPTO_USING_AES_ECB
+            select RT_HWCRYPTO_USING_AES_CBC
+            select RT_USING_HWCRYPTO
             bool "Enable AES"
             default n
-            select RT_USING_HWCRYPTO
 
         config BSP_USING_HRNG
             select RT_HWCRYPTO_USING_RNG
+            select RT_USING_HWCRYPTO
             bool "Enable HRNG"
             default n
+
+        config BSP_USING_SHA1
+            select RT_HWCRYPTO_USING_SHA1
             select RT_USING_HWCRYPTO
+            bool "Enable SHA1"
+            default n
+
+        config BSP_USING_SHA256
+            select RT_HWCRYPTO_USING_SHA2_256
+            select RT_HWCRYPTO_USING_SHA2
+            select RT_USING_HWCRYPTO
+            bool "Enable SHA256"
+            default n
     endmenu
 
     config BSP_USING_CMP

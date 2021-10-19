@@ -53,12 +53,12 @@ __weak void HAL_COMP_MspInit(COMP_HandleTypeDef* hcomp)
     }
     else if(hcomp->Init.Comparator == COMP2 )
     {
-        /* COMP2 GPIO inition VINP:PA3(INP_1)*/
+        /* COMP2 GPIO inition VINP:PB11(INP_2)*/
         /* COMP2 GPIO inition VOUT:PA7(FUNCTION_7)*/
-        GPIO_Handle.Pin            = GPIO_PIN_3;
+        GPIO_Handle.Pin            = GPIO_PIN_11;
         GPIO_Handle.Mode           = GPIO_MODE_ANALOG;
         GPIO_Handle.Pull           = GPIO_NOPULL;
-        HAL_GPIO_Init(GPIOA, &GPIO_Handle);
+        HAL_GPIO_Init(GPIOB, &GPIO_Handle);
         
         GPIO_Handle.Pin            = GPIO_PIN_7;
         GPIO_Handle.Mode           = GPIO_MODE_AF_PP;
