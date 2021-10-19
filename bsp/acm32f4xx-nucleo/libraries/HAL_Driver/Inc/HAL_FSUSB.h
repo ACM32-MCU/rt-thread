@@ -21,23 +21,20 @@
 #define     USB_EP3        3        
 #define     USB_EP4        4   
 
-#define     USB_EP_IN      USB_EP1
-#define     USB_EP_OUT     USB_EP1
 
 #define     EP_DIR_IN      0x80  
 #define     EP_DIR_OUT     0x00   
 
-#define 	HID_REPORT_SIZE         1024
 
 #define     EP0_MAX_PACKET_SIZE     64
 #define     EPX_MAX_PACKET_SIZE     64
 //#define     EPX_MAX_PACKET_SIZE_HS     512
 //#define     EPX_MAX_PACKET_SIZE_FS     64
 
-#define     MASK_EPX_IN(x)		(1<<(6+3*x))   
-#define     MASK_EPX_OUT(x)     (1<<(7+3*x))   
-#define     MASK_EPX_ACK(x)     (1<<(8+3*x)) 
-#define     MASK_EPX_TIMEOUT(x) (1<< (25+x))
+#define     MASK_EPX_IN(x)		(1<<(6+3*(x)))   
+#define     MASK_EPX_OUT(x)     (1<<(7+3*(x)))   
+#define     MASK_EPX_ACK(x)     (1<<(8+3*(x))) 
+#define     MASK_EPX_TIMEOUT(x) (1<< (25+(x)))
 
 typedef __PACKED_STRUCT _device_request
 {
@@ -88,18 +85,30 @@ typedef __PACKED_STRUCT _device_request
 #define ERROR_OUT_OUT            4  // received a same out packet 
 #define ERROR_IN_OUT             2  // received a pakcet when try to send packet   
 
-
+#define HAL_FSUSB_Clear_Interrupt(x)    (USBINT->INT_CLR = (x) )  
+#define HAL_FSUSB_GET_Interrupt_Status  (USBINT->INT_STAT_RAW)     
 
 uint32_t HAL_FSUSB_Init(void);     
 void HAL_FSUSB_Read_EP_MEM8(uint8_t *dst, uint32_t length, uint32_t fifo_offset, uint8_t ep_index);  
 uint8_t HAL_FSUSB_Send_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index);   
-void HAL_FSUSB_Receive_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index);  
+uint32_t HAL_FSUSB_Receive_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index, uint8_t single_packet);  
 uint16_t HAL_USB_Get_Stall_Status(uint8_t ep_index, uint8_t ep_dir);  
 void HAL_FSUSB_EP0_Send_Empty_Packet(void);  
 void HAL_FSUSB_EP0_Send_Stall(void);    
 void usb_clear_stall(uint8_t ep_index, uint8_t ep_dir);  
 void usb_send_stall(uint8_t ep_index, uint8_t ep_dir);
-uint16_t HAL_FSUSB_Get_FIFO_Length(uint8_t ep_index);      
+uint16_t HAL_FSUSB_Get_FIFO_Length(uint8_t ep_index);
+
+void HAL_FSUSB_Enable_Interrupt(uint32_t Interrupt);    
+void HAL_FSUSB_Disable_Interrupt(uint32_t Interrupt);   
+
+HAL_StatusTypeDef HAL_FSUSB_Check_Out_Packet(uint32_t ep_index);   
+
+void HAL_FSUSB_Bus_Reset(void);  
+
+void HAL_FSUSB_Suspend(void);      
+
+void HAL_FSUSB_Resume(void);     
 
 #endif  
 

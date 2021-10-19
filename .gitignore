@@ -42,3 +42,9 @@ tags
 .history
 CMakeLists.txt
 cmake-build-debug
+
+.config
+.metadata
+rt-thread.si4project
+settings
+sample_cmds.txt

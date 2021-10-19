@@ -43,11 +43,6 @@ HAL_StatusTypeDef HAL_EXTI_SetConfigLine(EXTI_HandleTypeDef *hexti)
     if (!IS_EXTI_MODE(hexti->u32_Mode))          return HAL_ERROR;
     if (!IS_EXTI_TRIGGER(hexti->u32_Trigger))    return HAL_ERROR;
     
-    /* Line0 ~ 15 trigger from GPIO */
-    if (!(hexti->u32_Line >> 16))
-    {
-        if (!IS_EXTI_GPIOSEL(hexti->u32_GPIOSel))    return HAL_ERROR;
-    }
 #endif
 
     lu32_IndexLine = hexti->u32_Line;

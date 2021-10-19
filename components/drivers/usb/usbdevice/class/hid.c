@@ -15,6 +15,9 @@
 #include "drivers/usb_common.h"
 #include "drivers/usb_device.h"
 #include "hid.h"
+                 
+#undef RT_DEBUG_USB
+#define RT_DEBUG_USB                    0x01
 
 #ifdef RT_USB_DEVICE_HID
 #define HID_INTF_STR_INDEX 7
@@ -283,18 +286,21 @@ const static struct uhid_comm_descriptor _hid_comm_desc =
         USB_DYNAMIC,
         0x01,
         0x03,                       /* bInterfaceClass: HID */
+
 #if defined(RT_USB_DEVICE_HID_KEYBOARD)||defined(RT_USB_DEVICE_HID_MOUSE)
         USB_HID_SUBCLASS_BOOT,    /* bInterfaceSubClass : 1=BOOT, 0=no boot */
 #else
         USB_HID_SUBCLASS_NOBOOT,    /* bInterfaceSubClass : 1=BOOT, 0=no boot */
 #endif
-#if !defined(RT_USB_DEVICE_HID_KEYBOARD)||!defined(RT_USB_DEVICE_HID_MOUSE)||!defined(RT_USB_DEVICE_HID_MEDIA)
-        USB_HID_PROTOCOL_NONE,      /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
-#elif !defined(RT_USB_DEVICE_HID_MOUSE)
+
+#if defined(RT_USB_DEVICE_HID_MOUSE)
+        USB_HID_PROTOCOL_MOUSE,      /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+#elif defined(RT_USB_DEVICE_HID_KEYBOARD)
         USB_HID_PROTOCOL_KEYBOARD,  /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
 #else
-        USB_HID_PROTOCOL_MOUSE,     /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+        USB_HID_PROTOCOL_NONE,     /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
 #endif
+
         0x00,
     },
 #endif
@@ -306,18 +312,21 @@ const static struct uhid_comm_descriptor _hid_comm_desc =
         0x00,                       /* bAlternateSetting: Alternate setting */
         0x02,                       /* bNumEndpoints */
         0x03,                       /* bInterfaceClass: HID */
+
 #if defined(RT_USB_DEVICE_HID_KEYBOARD)||defined(RT_USB_DEVICE_HID_MOUSE)
         USB_HID_SUBCLASS_BOOT,    /* bInterfaceSubClass : 1=BOOT, 0=no boot */
 #else
         USB_HID_SUBCLASS_NOBOOT,    /* bInterfaceSubClass : 1=BOOT, 0=no boot */
 #endif
-#if !defined(RT_USB_DEVICE_HID_KEYBOARD)||!defined(RT_USB_DEVICE_HID_MOUSE)||!defined(RT_USB_DEVICE_HID_MEDIA)
-        USB_HID_PROTOCOL_NONE,      /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
-#elif !defined(RT_USB_DEVICE_HID_MOUSE)
-        USB_HID_PROTOCOL_KEYBOARD,  /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+
+#if defined(RT_USB_DEVICE_HID_MOUSE)
+        USB_HID_PROTOCOL_MOUSE,      /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+#elif defined(RT_USB_DEVICE_HID_KEYBOARD)
+        USB_HID_PROTOCOL_KEYBOARD,   /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
 #else
-        USB_HID_PROTOCOL_MOUSE,     /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
+        USB_HID_PROTOCOL_NONE,       /* nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse */
 #endif
+
 #ifdef RT_USB_DEVICE_COMPOSITE
         HID_INTF_STR_INDEX,         /* iInterface: Index of string descriptor */
 #else
@@ -457,7 +466,8 @@ static rt_err_t _interface_handler(ufunction_t func, ureq_t setup)
     RT_ASSERT(setup != RT_NULL);
 
     struct hid_s *data = (struct hid_s *) func->user_data;
-
+       
+    RT_DEBUG_LOG(RT_DEBUG_USB, ("_interface_handler %04X\n", setup->bRequest));
 
     switch (setup->bRequest)
     {

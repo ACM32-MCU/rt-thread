@@ -291,7 +291,9 @@ typedef struct
     __IO uint32_t SR;
     __IO uint32_t DR;
     __IO uint32_t SLAVE_ADDR2_3;
-    __IO uint32_t RSV[3];
+    __IO uint32_t RSV0; 
+    __IO uint32_t FILTER; 
+    __IO uint32_t RSV1; 
     __IO uint32_t TIMEOUT;
 }I2C_TypeDef;
 

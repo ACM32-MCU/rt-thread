@@ -194,7 +194,7 @@ void HAL_RTC_AlarmConfig(RTC_AlarmTypeDef *fp_Alarm)
     }
     else 
     {
-        lu32_WeekDay = fp_Alarm->u32_AlarmDay;
+        lu32_WeekDay = fp_Alarm->u32_AlarmDay<<24;
     }
 
     /* Coinfig Week/Day¡¢Hour¡¢Min¡¢Sec */
@@ -258,7 +258,19 @@ void HAL_RTC_Tamper(enum_Temper_t fe_Temper, RTC_TemperTypeDef *fp_Temper)
     {
         case RTC_TEMPER_1: 
         {
-            PMU->IOCR  &= ~0x40;  // Configure PC13 as digital IO   
+            PMU->IOCR  &= ~(1<<6);  // Configure PC13 as digital IO   
+			if(fp_Temper->u32_TemperEdge ==RTC_TEMP_EDGE_FALLING) 
+			{
+				// Configure PC13 pull up
+				PMU->IOCR |= 1<<0;   
+				PMU->IOCR &=~(1<<1);
+			}
+			else
+			{
+				// Configure PC13 pull down
+				PMU->IOCR &= ~(1<<0);
+				PMU->IOCR |=(1<<1);	
+			}
             PMU->IOSEL |=  0x02;  // Configure PC13 as tamper function   
             
             /* Clear Config */
@@ -298,6 +310,19 @@ void HAL_RTC_Tamper(enum_Temper_t fe_Temper, RTC_TemperTypeDef *fp_Temper)
         
         case RTC_TEMPER_2:
         {
+			SCU->PABADS &= ~(1<<0);
+			if(fp_Temper->u32_TemperEdge ==RTC_TEMP_EDGE_FALLING) 
+			{
+				// Configure PA0 pull up
+				SCU->PABPUR |=  1<<0;   
+				SCU->PABPDR &=~(1<<0);
+			}
+			else
+			{
+				// Configure PA0 pull down
+				SCU->PABPUR &= ~(1<<0);   
+				SCU->PABPDR |= 1<<0;
+			}
             /* Clear Config */
             RTC->CR &= ~(RTC_CR_TAMP2RCLR | RTC_CR_TAMP2FCLR | RTC_CR_TAMP2FLTEN | RTC_CR_TAMP2FLT | RTC_CR_TS2EDGE | RTC_CR_TAMPFLTCLK);
             /* Edge select */

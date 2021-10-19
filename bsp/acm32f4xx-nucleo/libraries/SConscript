@@ -12,6 +12,17 @@ HAL_Driver/Src/HAL_DMA.c
 HAL_Driver/Src/HAL_GPIO.c
 HAL_Driver/Src/HAL_UART.c
 HAL_Driver/Src/HAL_EXTI.c
+HAL_Driver/Src/HAL_TIMER.c
+HAL_Driver/Src/HAL_WDT.c
+HAL_Driver/Src/HAL_IWDT.c
+HAL_Driver/Src/HAL_RTC.c
+HAL_Driver/Src/HAL_I2C.c
+HAL_Driver/Src/HAL_SPI.c
+HAL_Driver/Src/HAL_ADC.c
+HAL_Driver/Src/HAL_DAC.c
+HAL_Driver/Src/HAL_FSUSB.c
+HAL_Driver/Src/HAL_CAN.c
+HAL_Driver/Src/HAL_CRC.c
 """)
 
 
@@ -20,10 +31,13 @@ libs = ['System_Accelerate', 'HAL_EFlash_EX']
 
 if rtconfig.CROSS_TOOL == 'gcc':
     src += ['Device/Startup_ACM32F4_gcc.s']
+    libs += ['HAL_HRNG_20220705', 'HAL_SHA1_20220705', 'HAL_SHA256_20220705', 'HAL_AES_20220705']
 elif rtconfig.CROSS_TOOL == 'keil':
+    libs += ['HAL_HRNG_20210325', 'HAL_SHA1_20210325', 'HAL_SHA256_20210325', 'HAL_AES_20210325']
     src += ['Device/Startup_ACM32F4.s']
 elif rtconfig.CROSS_TOOL == 'iar':
     src += ['Device/Startup_ACM32F4_iar.s']
+    libs += ['HAL_HRNG_20210325', 'HAL_SHA1_20210325', 'HAL_SHA256_20210325', 'HAL_AES_20210325']
 
 path = [cwd + '/HAL_Driver/Inc',
     cwd + '/Device',

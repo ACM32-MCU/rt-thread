@@ -1,16 +1,13 @@
 /**************************************************************************//**
  * @file     cmsis_iccarm.h
  * @brief    CMSIS compiler ICCARM (IAR Compiler for Arm) header file
- * @version  V5.2.0
- * @date     28. January 2020
+ * @version  V5.0.7
+ * @date     19. June 2018
  ******************************************************************************/
 
 //------------------------------------------------------------------------------
 //
-// Copyright (c) 2017-2019 IAR Systems
-// Copyright (c) 2017-2019 Arm Limited. All rights reserved. 
-//
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2017-2018 IAR Systems
 //
 // Licensed under the Apache License, Version 2.0 (the "License")
 // you may not use this file except in compliance with the License.
@@ -108,19 +105,21 @@
   #define __IAR_M0_FAMILY  0
 #endif
 
+   
 
 #ifndef __ASM
   #define __ASM __asm
-#endif
-
-#ifndef   __COMPILER_BARRIER
-  #define __COMPILER_BARRIER() __ASM volatile("":::"memory")
 #endif
 
 #ifndef __INLINE
   #define __INLINE inline
 #endif
 
+      //add on 2021.5.18
+#ifndef __COMPILER_BARRIER
+  #define __COMPILER_BARRIER()   __ASM volatile("":::"memory")
+#endif  
+      
 #ifndef   __NO_RETURN
   #if __ICCARM_V8
     #define __NO_RETURN __attribute__((__noreturn__))
@@ -157,12 +156,7 @@
 #endif
 
 #ifndef   __RESTRICT
-  #if __ICCARM_V8
-    #define __RESTRICT            __restrict
-  #else
-    /* Needs IAR language extensions */
-    #define __RESTRICT            restrict
-  #endif
+  #define __RESTRICT            __restrict
 #endif
 
 #ifndef   __STATIC_INLINE
@@ -246,25 +240,6 @@ __packed struct  __iar_u32 { uint32_t v; };
   #endif
 #endif
 
-#ifndef __PROGRAM_START
-#define __PROGRAM_START           __iar_program_start
-#endif
-
-#ifndef __INITIAL_SP
-#define __INITIAL_SP              CSTACK$$Limit
-#endif
-
-#ifndef __STACK_LIMIT
-#define __STACK_LIMIT             CSTACK$$Base
-#endif
-
-#ifndef __VECTOR_TABLE
-#define __VECTOR_TABLE            __vector_table
-#endif
-
-#ifndef __VECTOR_TABLE_ATTRIBUTE
-#define __VECTOR_TABLE_ATTRIBUTE  @".intvec"
-#endif
 
 #ifndef __ICCARM_INTRINSICS_VERSION__
   #define __ICCARM_INTRINSICS_VERSION__  0
@@ -598,7 +573,7 @@ __packed struct  __iar_u32 { uint32_t v; };
     __IAR_FT uint32_t __RRX(uint32_t value)
     {
       uint32_t result;
-      __ASM volatile("RRX      %0, %1" : "=r"(result) : "r" (value));
+      __ASM("RRX      %0, %1" : "=r"(result) : "r" (value) : "cc");
       return(result);
     }
 
@@ -837,37 +812,37 @@ __packed struct  __iar_u32 { uint32_t v; };
   __IAR_FT uint8_t __LDRBT(volatile uint8_t *addr)
   {
     uint32_t res;
-    __ASM volatile ("LDRBT %0, [%1]" : "=r" (res) : "r" (addr) : "memory");
+    __ASM("LDRBT %0, [%1]" : "=r" (res) : "r" (addr) : "memory");
     return ((uint8_t)res);
   }
 
   __IAR_FT uint16_t __LDRHT(volatile uint16_t *addr)
   {
     uint32_t res;
-    __ASM volatile ("LDRHT %0, [%1]" : "=r" (res) : "r" (addr) : "memory");
+    __ASM("LDRHT %0, [%1]" : "=r" (res) : "r" (addr) : "memory");
     return ((uint16_t)res);
   }
 
   __IAR_FT uint32_t __LDRT(volatile uint32_t *addr)
   {
     uint32_t res;
-    __ASM volatile ("LDRT %0, [%1]" : "=r" (res) : "r" (addr) : "memory");
+    __ASM("LDRT %0, [%1]" : "=r" (res) : "r" (addr) : "memory");
     return res;
   }
 
   __IAR_FT void __STRBT(uint8_t value, volatile uint8_t *addr)
   {
-    __ASM volatile ("STRBT %1, [%0]" : : "r" (addr), "r" ((uint32_t)value) : "memory");
+    __ASM("STRBT %1, [%0]" : : "r" (addr), "r" ((uint32_t)value) : "memory");
   }
 
   __IAR_FT void __STRHT(uint16_t value, volatile uint16_t *addr)
   {
-    __ASM volatile ("STRHT %1, [%0]" : : "r" (addr), "r" ((uint32_t)value) : "memory");
+    __ASM("STRHT %1, [%0]" : : "r" (addr), "r" ((uint32_t)value) : "memory");
   }
 
   __IAR_FT void __STRT(uint32_t value, volatile uint32_t *addr)
   {
-    __ASM volatile ("STRT %1, [%0]" : : "r" (addr), "r" (value) : "memory");
+    __ASM("STRT %1, [%0]" : : "r" (addr), "r" (value) : "memory");
   }
 
 #endif /* (__CORTEX_M >= 0x03) */
@@ -962,7 +937,5 @@ __packed struct  __iar_u32 { uint32_t v; };
 
 #pragma diag_default=Pe940
 #pragma diag_default=Pe177
-
-#define __SXTB16_RORn(ARG1, ARG2) __SXTB16(__ROR(ARG1, ARG2))
 
 #endif /* __CMSIS_ICCARM_H__ */

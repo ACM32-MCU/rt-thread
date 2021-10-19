@@ -65,7 +65,7 @@
         </option>
         <option>
           <name>OGLastSavedByProductVersion</name>
-          <state>8.32.1.18618</state>
+          <state>8.50.9.33458</state>
         </option>
         <option>
           <name>GeneralEnableMisra</name>
@@ -115,7 +115,7 @@
         </option>
         <option>
           <name>GBECoreSlave</name>
-          <version>26</version>
+          <version>28</version>
           <state>59</state>
         </option>
         <option>
@@ -132,7 +132,7 @@
         </option>
         <option>
           <name>CoreVariant</name>
-          <version>26</version>
+          <version>28</version>
           <state>59</state>
         </option>
         <option>
@@ -155,7 +155,7 @@
         </option>
         <option>
           <name>GFPUCoreSlave2</name>
-          <version>26</version>
+          <version>28</version>
           <state>59</state>
         </option>
         <option>
@@ -197,7 +197,7 @@
         </option>
         <option>
           <name>DSPExtension</name>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>TrustZone</name>
@@ -214,7 +214,7 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>35</version>
+        <version>36</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>1</debug>
         <option>
@@ -225,6 +225,7 @@
           <name>CCDefines</name>
           <state />
           <state>RT_USING_DLIBC</state>
+          <state>_DLIB_FILE_DESCRIPTOR</state>
           <state>__RTTHREAD__</state>
         </option>
         <option>
@@ -357,6 +358,7 @@
           <state>$PROJ_DIR$\..\..\components\libc\compilers\common\extension</state>
           <state>$PROJ_DIR$\..\..\components\libc\compilers\common</state>
           <state>$PROJ_DIR$\..\..\components\libc\posix\ipc</state>
+          <state>$PROJ_DIR$\..\..\components\finsh</state>
           <state>$PROJ_DIR$\drivers</state>
           <state>$PROJ_DIR$\.</state>
           <state>$PROJ_DIR$\libraries\Device</state>
@@ -364,9 +366,13 @@
           <state>$PROJ_DIR$\..\..\components\libc\posix\io\poll</state>
           <state>$PROJ_DIR$\..\..\components\libc\posix\io\stdio</state>
           <state>$PROJ_DIR$\libraries\CMSIS</state>
-          <state>$PROJ_DIR$\..\..\components\drivers\include</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\audio</state>
           <state>$PROJ_DIR$\..\..\libcpu\arm\common</state>
-          <state>$PROJ_DIR$\..\..\components\finsh</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\spi</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\include</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\usb\usbdevice</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\hwcrypto</state>
+          <state>$PROJ_DIR$\..\..\components\dfs\include</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -484,13 +490,17 @@
           <name>OICompilerExtraOption</name>
           <state>1</state>
         </option>
+        <option>
+          <name>CCStackProtection</name>
+          <state>0</state>
+        </option>
       </data>
     </settings>
     <settings>
       <name>AARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>10</version>
+        <version>11</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>1</debug>
         <option>
@@ -646,6 +656,10 @@
           <name>AsmNoLiteralPool</name>
           <state>0</state>
         </option>
+        <option>
+          <name>PreInclude</name>
+          <state />
+        </option>
       </data>
     </settings>
     <settings>
@@ -666,7 +680,7 @@
         </option>
         <option>
           <name>OOCOutputFile</name>
-          <state>../../../rtthread.bin</state>
+          <state>../../rtthread-iar.bin</state>
         </option>
         <option>
           <name>OOCCommandLineProducer</name>
@@ -704,7 +718,7 @@
       <name>ILINK</name>
       <archiveVersion>0</archiveVersion>
       <data>
-        <version>22</version>
+        <version>23</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>1</debug>
         <option>
@@ -1026,6 +1040,22 @@
           <name>OILinkExtraOption</name>
           <state>1</state>
         </option>
+        <option>
+          <name>IlinkRawBinaryFile2</name>
+          <state />
+        </option>
+        <option>
+          <name>IlinkRawBinarySymbol2</name>
+          <state />
+        </option>
+        <option>
+          <name>IlinkRawBinarySegment2</name>
+          <state />
+        </option>
+        <option>
+          <name>IlinkRawBinaryAlign2</name>
+          <state />
+        </option>
       </data>
     </settings>
     <settings>
@@ -1170,7 +1200,7 @@
         </option>
         <option>
           <name>GBECoreSlave</name>
-          <version>26</version>
+          <version>28</version>
           <state>34</state>
         </option>
         <option>
@@ -1187,7 +1217,7 @@
         </option>
         <option>
           <name>CoreVariant</name>
-          <version>26</version>
+          <version>28</version>
           <state>34</state>
         </option>
         <option>
@@ -1210,7 +1240,7 @@
         </option>
         <option>
           <name>GFPUCoreSlave2</name>
-          <version>26</version>
+          <version>28</version>
           <state>34</state>
         </option>
         <option>
@@ -1269,7 +1299,7 @@
       <name>ICCARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>35</version>
+        <version>36</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
         <option>
@@ -1280,6 +1310,7 @@
           <name>CCDefines</name>
           <state />
           <state>RT_USING_DLIBC</state>
+          <state>_DLIB_FILE_DESCRIPTOR</state>
           <state>__RTTHREAD__</state>
         </option>
         <option>
@@ -1412,6 +1443,7 @@
           <state>$PROJ_DIR$\..\..\components\libc\compilers\common\extension</state>
           <state>$PROJ_DIR$\..\..\components\libc\compilers\common</state>
           <state>$PROJ_DIR$\..\..\components\libc\posix\ipc</state>
+          <state>$PROJ_DIR$\..\..\components\finsh</state>
           <state>$PROJ_DIR$\drivers</state>
           <state>$PROJ_DIR$\.</state>
           <state>$PROJ_DIR$\libraries\Device</state>
@@ -1419,9 +1451,13 @@
           <state>$PROJ_DIR$\..\..\components\libc\posix\io\poll</state>
           <state>$PROJ_DIR$\..\..\components\libc\posix\io\stdio</state>
           <state>$PROJ_DIR$\libraries\CMSIS</state>
-          <state>$PROJ_DIR$\..\..\components\drivers\include</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\audio</state>
           <state>$PROJ_DIR$\..\..\libcpu\arm\common</state>
-          <state>$PROJ_DIR$\..\..\components\finsh</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\spi</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\include</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\usb\usbdevice</state>
+          <state>$PROJ_DIR$\..\..\components\drivers\hwcrypto</state>
+          <state>$PROJ_DIR$\..\..\components\dfs\include</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -1539,13 +1575,17 @@
           <name>OICompilerExtraOption</name>
           <state>1</state>
         </option>
+        <option>
+          <name>CCStackProtection</name>
+          <state>0</state>
+        </option>
       </data>
     </settings>
     <settings>
       <name>AARM</name>
       <archiveVersion>2</archiveVersion>
       <data>
-        <version>10</version>
+        <version>11</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
         <option>
@@ -1701,6 +1741,10 @@
           <name>AsmNoLiteralPool</name>
           <state>0</state>
         </option>
+        <option>
+          <name>PreInclude</name>
+          <state />
+        </option>
       </data>
     </settings>
     <settings>
@@ -1759,7 +1803,7 @@
       <name>ILINK</name>
       <archiveVersion>0</archiveVersion>
       <data>
-        <version>22</version>
+        <version>23</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
         <option>
@@ -2081,6 +2125,22 @@
           <name>OILinkExtraOption</name>
           <state>1</state>
         </option>
+        <option>
+          <name>IlinkRawBinaryFile2</name>
+          <state />
+        </option>
+        <option>
+          <name>IlinkRawBinarySymbol2</name>
+          <state />
+        </option>
+        <option>
+          <name>IlinkRawBinarySegment2</name>
+          <state />
+        </option>
+        <option>
+          <name>IlinkRawBinaryAlign2</name>
+          <state />
+        </option>
       </data>
     </settings>
     <settings>
@@ -2116,16 +2176,49 @@
       <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_UART.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_TIMER.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_FSUSB.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_CAN.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_RTC.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_EXTI.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_DMA.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_ADC.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_I2C.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\libraries\Device\Startup_ACM32F4_iar.s</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_DAC.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_CRC.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\libraries\Device\System_ACM32F4.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_WDT.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_SPI.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_IWDT.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\libraries\HAL_Driver\Src\HAL_GPIO.c</name>
@@ -2137,7 +2230,37 @@
   <group>
     <name>Applications</name>
     <file>
+      <name>$PROJ_DIR$\applications\can_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\crc_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\hrng_sample.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\applications\main.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\spi_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\alarm_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\symmetric_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\hwtimer_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\hash_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\i2c_sample.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\applications\wdt_sample.c</name>
     </file>
   </group>
   <group>
@@ -2149,31 +2272,31 @@
       <name>$PROJ_DIR$\..\..\components\libc\compilers\common\stdlib.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_close.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_read.c</name>
+      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_remove.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscalls.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_mem.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_lseek.c</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_write.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_open.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\environ.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_remove.c</name>
+      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_lseek.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_close.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_mem.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_read.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\libc\compilers\dlib\syscall_open.c</name>
     </file>
   </group>
   <group>
@@ -2188,22 +2311,67 @@
       <name>$PROJ_DIR$\..\..\libcpu\arm\common\showmem.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m33\context_iar.S</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m33\syscall_iar.S</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m33\trustzone.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m33\cpuport.c</name>
     </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m33\context_iar.S</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\libcpu\arm\cortex-m33\syscall_iar.S</name>
+    </file>
   </group>
   <group>
     <name>DeviceDrivers</name>
     <file>
-      <name>$PROJ_DIR$\..\..\components\drivers\ipc\waitqueue.c</name>
+      <name>$PROJ_DIR$\..\..\components\drivers\audio\audio.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\audio\audio_pipe.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\can\can.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\hwcrypto\hw_symmetric.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\hwcrypto\hwcrypto.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\hwcrypto\hw_rng.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\hwcrypto\hw_crc.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\hwcrypto\hw_hash.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\hwtimer\hwtimer.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\i2c\i2c_core.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\i2c\i2c_dev.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\i2c\i2c-bit-ops.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\ipc\ringbuffer.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\ipc\workqueue.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\ipc\completion.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\ipc\dataqueue.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\components\drivers\ipc\pipe.c</name>
@@ -2212,34 +2380,100 @@
       <name>$PROJ_DIR$\..\..\components\drivers\ipc\ringblk_buf.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\drivers\ipc\dataqueue.c</name>
+      <name>$PROJ_DIR$\..\..\components\drivers\ipc\waitqueue.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\drivers\ipc\ringbuffer.c</name>
+      <name>$PROJ_DIR$\..\..\components\drivers\misc\dac.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\drivers\ipc\completion.c</name>
+      <name>$PROJ_DIR$\..\..\components\drivers\misc\adc.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\components\drivers\ipc\workqueue.c</name>
+      <name>$PROJ_DIR$\..\..\components\drivers\misc\rt_drv_pwm.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\components\drivers\misc\pin.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\rtc\rtc.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\rtc\alarm.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\..\components\drivers\serial\serial.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\spi\spi_core.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\spi\spi_dev.c</name>
     </file>
   </group>
   <group>
     <name>Drivers</name>
     <file>
-      <name>$PROJ_DIR$\drivers\board.c</name>
+      <name>$PROJ_DIR$\drivers\drv_hwtimer.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_adc.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_spi.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_pin_table.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_i2c.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_pwm.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_dac.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_crypto.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_uart.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_rtc.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_can.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_usbd.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\drivers\drv_gpio.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\drivers\drv_uart.c</name>
+      <name>$PROJ_DIR$\drivers\drv_wdt.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\board.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\drivers\drv_i2s.c</name>
+    </file>
+  </group>
+  <group>
+    <name>Filesystem</name>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\dfs\src\dfs_posix.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\dfs\src\dfs_fs.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\dfs\src\dfs.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\dfs\src\dfs_file.c</name>
     </file>
   </group>
   <group>
@@ -2251,52 +2485,67 @@
       <name>$PROJ_DIR$\..\..\components\finsh\msh.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\..\..\components\finsh\msh_file.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\..\components\finsh\cmd.c</name>
     </file>
   </group>
   <group>
     <name>Kernel</name>
     <file>
-      <name>$PROJ_DIR$\..\..\src\components.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\src\kservice.c</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\..\src\clock.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\src\object.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\src\irq.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\src\idle.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\src\ipc.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\..\..\src\timer.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\src\kservice.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\..\src\mem.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\src\mempool.c</name>
+      <name>$PROJ_DIR$\..\..\src\irq.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\src\scheduler.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\src\timer.c</name>
+      <name>$PROJ_DIR$\..\..\src\components.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\src\thread.c</name>
     </file>
     <file>
+      <name>$PROJ_DIR$\..\..\src\mempool.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\src\object.c</name>
+    </file>
+    <file>
       <name>$PROJ_DIR$\..\..\src\device.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\src\scheduler.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\src\idle.c</name>
     </file>
   </group>
   <group>
     <name>POSIX</name>
+  </group>
+  <group>
+    <name>rt_usbd</name>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\usb\usbdevice\core\usbdevice_core.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\usb\usbdevice\core\usbdevice.c</name>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\..\components\drivers\usb\usbdevice\class\hid.c</name>
+    </file>
   </group>
 </project>

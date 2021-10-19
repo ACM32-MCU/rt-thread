@@ -84,16 +84,14 @@
 #define    REQ24_TIM15_CH1_UP_TRIG_COM    (24)
 #define    REQ25_TIM15_CH2                (25)
 #define    REQ26_TIM16_CH1_UP             (26)
-#define    REQ27_TIM16_TRIG_COM           (27)
 #define    REQ27_UART3_SEND               (27)
 #define    REQ28_TIM17_CH1_UP             (28)
-#define    REQ29_TIM17_TRIG_COM           (29)
 #define    REQ29_UART3_RECV               (29)
 #define    REQ30_LPUART_SEND              (30)
 #define    REQ31_LPUART_RECV              (31)
 #define    REQ32_TIM2_CH3                 (32)
-#define    REQ33_TIM2_CH4                 (33)
-#define    REQ34_TIM2_CH1                 (34)
+#define    REQ33_TIM2_CH4_UP              (33)
+#define    REQ34_TIM2_CH1_TRIG            (34)
 #define    REQ35_TIM2_CH2                 (35)
 #define    REQ36_TIM7_UP                  (36)
 #define    REQ37_I2S1_TX                  (37)
@@ -101,8 +99,8 @@
 #define    REQ39_DAC1_CH1                 (39)
 #define    REQ40_DAC1_CH2                 (40)
 #define    REQ41_TIM4_CH3                 (41)
-#define    REQ42_TIM4_CH4                 (42)
-#define    REQ43_TIM4_CH1                 (43)
+#define    REQ42_TIM4_CH4_UP              (42)
+#define    REQ43_TIM4_CH1_TRIG            (43)
 #define    REQ44_TIM4_CH2                 (44)
 #define    REQ45_UART4_SEND               (45)
 #define    REQ46_UART4_RECV               (46)
@@ -142,7 +140,7 @@
  */
 #define    DMA_SRC_WIDTH_BYTE         (0x00000000)    /*  8bit */
 #define    DMA_SRC_WIDTH_HALF_WORD    (0x00040000)    /* 16bit */
-#define    DMA_SRC_WIDTH_WORD         (0x00080000)    /* 36bit */
+#define    DMA_SRC_WIDTH_WORD         (0x00080000)    /* 32bit */
 /**
   * @}
   */
@@ -152,7 +150,7 @@
  */
 #define    DMA_DST_WIDTH_BYTE         (0x00000000)    /*  8bit */
 #define    DMA_DST_WIDTH_HALF_WORD    (0x00200000)    /* 16bit */
-#define    DMA_DST_WIDTH_WORD         (0x00400000)    /* 36bit */
+#define    DMA_DST_WIDTH_WORD         (0x00400000)    /* 32bit */
 /**
   * @}
   */

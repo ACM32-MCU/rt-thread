@@ -46,11 +46,15 @@ typedef enum
 }HAL_StatusTypeDef;
 
 
-//#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050) /* ARM Compiler V6 */
+#if defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050) /* ARM Compiler V6 */
   #ifndef __weak
     #define __weak  __attribute__((weak))
   #endif
-//#endif
+#elif defined (__GNUC__)
+  #ifndef __weak
+    #define __weak  __attribute__((weak))
+  #endif
+#endif
 
 
 /* USE FULL ASSERT */
