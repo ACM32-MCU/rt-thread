@@ -208,7 +208,7 @@ def MDK4AddGroup(ProjectFiles, parent, name, files, project_path, group_scons):
 
     return group
 
-# The common part of making MDK4/5 project 
+# The common part of making MDK4/5 project
 def MDK45Project(tree, target, script):
     project_path = os.path.dirname(os.path.abspath(target))
 
@@ -281,6 +281,11 @@ def MDK45Project(tree, target, script):
     out.close()
 
 def MDK4Project(target, script):
+
+    if os.path.isfile('template.uvproj') is False:
+        print ('Warning: The template project file [template.uvproj] not found!')
+        return
+
     template_tree = etree.parse('template.uvproj')
 
     MDK45Project(template_tree, target, script)
@@ -296,6 +301,10 @@ def MDK4Project(target, script):
         shutil.copy2('template.uvopt', 'project.uvopt')
 
 def MDK5Project(target, script):
+
+    if os.path.isfile('template.uvprojx') is False:
+        print ('Warning: The template project file [template.uvprojx] not found!')
+        return
 
     template_tree = etree.parse('template.uvprojx')
 
@@ -428,7 +437,7 @@ def ARMCC_Version():
     stdout, stderr = child.communicate()
 
     '''
-    example stdout: 
+    example stdout:
     Product: MDK Plus 5.24
     Component: ARM Compiler 5.06 update 5 (build 528)
     Tool: armcc [4d3621]
