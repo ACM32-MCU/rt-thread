@@ -243,7 +243,7 @@ typedef enum {DISABLE = 0, ENABLE = !DISABLE} FunctionalState;
 #define CAN_OperatingMode_Normal           ((uint8_t)0x00) /*!< Initialization mode */
 #define CAN_OperatingMode_Initialization   ((uint8_t)0x01) /*!< Normal mode */
 #define CAN_OperatingMode_Listen           ((uint8_t)0x02) /*!< Listen mode */
-#define CAN_OperatingMode_SelfTest         ((uint8_t)0x04) /*!< Listen mode */
+#define CAN_OperatingMode_SelfTest           ((uint8_t)0x04) /*!< Listen mode */
 #define CAN_OperatingMode_Sleep            ((uint8_t)0x10) /*!< sleep mode */
 
 

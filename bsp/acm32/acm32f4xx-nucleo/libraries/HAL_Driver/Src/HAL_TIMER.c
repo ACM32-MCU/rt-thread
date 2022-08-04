@@ -436,11 +436,12 @@ uint32_t HAL_TIMER_Output_Config(TIM_TypeDef *TIMx, TIM_OC_InitTypeDef * Output_
 		}
 		
 		TIMx->CCMR2 &= (~0x00FF); // reset low 8 bits 
-		TIMx->CCMR2 |= (BIT3);  // preload enable   
+		  
 		if (OUTPUT_FAST_MODE_ENABLE == Output_Config->OCFastMode)  
 		{
 			TIMx->CCMR2 |= (BIT2);  
 		}
+        TIMx->CCMR2 |= (BIT3);  // preload enable 
 		 
 		TIMx->CCR3 = Output_Config->Pulse;  	
 		if (IS_TIM_BREAK_INSTANCE(TIMx)) 

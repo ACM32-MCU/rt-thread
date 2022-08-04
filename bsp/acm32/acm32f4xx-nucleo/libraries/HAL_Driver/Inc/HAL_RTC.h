@@ -187,6 +187,11 @@
   */
 #define RTC_ALARM_WEEK_MODE       (0x00000000)
 #define RTC_ALARM_DAY_MODE        (0x80000000)
+
+/** @defgroup RTC_Alarm_Day bit position
+  * @{
+  */
+#define RTC_ALARM_DAY_BIT_POSITION        24
 /**
   * @}
   */

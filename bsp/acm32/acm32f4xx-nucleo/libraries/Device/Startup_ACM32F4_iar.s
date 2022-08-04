@@ -74,9 +74,9 @@ __vector_table
         DCD     TIM15_IRQHandler                  ; TIM15_IRQHandler
         DCD     TIM16_IRQHandler                  ; TIM16_IRQHandler
         DCD     TIM17_IRQHandler                  ; TIM17_IRQHandler
-        DCD     I2C1_IRQHandler                   ; I2C1_IRQHandler
-        DCD     I2C2_IRQHandler                   ; I2C2_IRQHandler
-        DCD     SPI1_IRQHandler                   ; SPI1_IRQHandler
+        DCD     I2C1_IRQHandler                   ; I2C1_IRQHandler 
+        DCD     I2C2_IRQHandler                   ; I2C2_IRQHandler 
+        DCD     SPI1_IRQHandler                   ; SPI1_IRQHandler 
         DCD     SPI2_IRQHandler                   ; SPI2_IRQHandler
         DCD     UART1_IRQHandler                  ; UART1_IRQHandler
         DCD     UART2_IRQHandler                  ; UART2_IRQHandler
@@ -87,7 +87,7 @@ __vector_table
         DCD     DAC_IRQHandler                    ; DAC_IRQHandler
         DCD     I2S_IRQHandler                    ; I2S_IRQHandler
         DCD     GPIOEF_IRQHandler                 ; GPIOEF_IRQHandler
-        DCD     CAN1_IRQHandler                   ; CAN1_IRQHandler
+        DCD     CAN1_IRQHandler                   ; CAN1_IRQHandler 
         DCD     CAN2_IRQHandler                   ; CAN2_IRQHandler
         DCD     FPU_IRQHandler                    ; FPU_IRQHandler
         DCD     TIM4_IRQHandler                   ; TIM4_IRQHandler
@@ -360,6 +360,6 @@ TIM4_IRQHandler
 SPI4_IRQHandler
         B SPI4_IRQHandler
 
-
+       
         END
 /************************ (C) COPYRIGHT Aisinochip *****END OF FILE****/

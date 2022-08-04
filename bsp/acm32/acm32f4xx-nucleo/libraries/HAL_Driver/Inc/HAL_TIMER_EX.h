@@ -48,9 +48,6 @@
 #define TIM_BDTR_MOE_Msk          (0x1UL << TIM_BDTR_MOE_Pos)                  /*!< 0x00008000 */
 #define TIM_BDTR_MOE              TIM_BDTR_MOE_Msk                             /*!<Main Output enable */
 
-#define TIM_BDTR_BKF_Pos          (16U)
-#define TIM_BDTR_BKF_Msk          (0xFUL << TIM_BDTR_BKF_Pos)                  /*!< 0x000F0000 */
-#define TIM_BDTR_BKF              TIM_BDTR_BKF_Msk       
 
 #define TIM_BREAKINPUTSOURCE_BKIN     0x00000001U                               /* !< An external source (GPIO) is connected to the BKIN pin  */
 #ifdef HAL_COMP_MODULE_ENABLED  

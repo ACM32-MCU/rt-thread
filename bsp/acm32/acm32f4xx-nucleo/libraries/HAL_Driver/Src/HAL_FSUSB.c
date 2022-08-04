@@ -182,7 +182,7 @@ void HAL_FSUSB_Read_EP_MEM8(uint8_t *dst, uint32_t length, uint32_t fifo_offset,
 {
 	uint8_t *src;
 
-	src = (uint8_t *)(USB_BASE+0x200+(ep_index<<6)+fifo_offset);
+	src = (uint8_t *)(USB_BASE+0x200+(ep_index<<6)+fifo_offset);       
 	while(length--)
 	{
 		*dst++ = *src++;
@@ -261,8 +261,10 @@ uint8_t HAL_FSUSB_Start_EP_Transfer(uint32_t length,uint8_t ep_index)
    
 uint8_t HAL_FSUSB_Send_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index)
 {
+    uint32_t length_save;  
 	uint8_t ret;
-	
+    
+	length_save = length;  
 	while(length>=EPX_MAX_PACKET_SIZE)
 	{    		
 		HAL_FSUSB_Write_EP_MEM8(buffer,EPX_MAX_PACKET_SIZE,0, ep_index);  		   
@@ -306,6 +308,15 @@ uint8_t HAL_FSUSB_Send_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index)
 	 	length -= length;
 	  	buffer += length;
 	}
+    
+    // add by fw, 20220614  
+    if (0 == ep_index) 
+    {
+        if (0 == (length_save % EP0_MAX_PACKET_SIZE))
+        {
+            HAL_FSUSB_EP0_Send_Empty_Packet();  
+        }
+    }
 	
 	return 0;  
 }
@@ -334,22 +345,20 @@ uint32_t HAL_FSUSB_Receive_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index
 
         HAL_FSUSB_Clear_Interrupt(MASK_EPX_OUT(ep_index) | MASK_EPX_ACK(ep_index));    
 		USBCTRL->EPxCSR[ep_index] |= BIT20; // clear out valid 
-                       
+        
 		if( USBCTRL->EPxCSR[ep_index] & ( 1<< 19) )//Toggle error 
 		{
 		    USBCTRL->EPxCSR[ep_index] ^= (1<<17); //out toggle want
 			USBCTRL->EPxCSR[ep_index] |= (1<<18); //update want toggle; 
 			USBCTRL->EPxCSR[ep_index] |= 1<<11;   //set rx ready, wait for a new packet 
 			continue;  //discard this packet          			
-		}	
+		}		
 	
 		fifo_len	=HAL_FSUSB_Get_FIFO_Length(ep_index);
         if (read_length < fifo_len)
         {
             return ((fifo_len << 16) | read_length);     // error, app should read all data saved in fifo    
-        }
-
-        
+        }           
 		HAL_FSUSB_Read_EP_MEM8(buffer,fifo_len,0,ep_index);	
 		read_length -= fifo_len;
 		buffer += fifo_len;     
@@ -357,15 +366,15 @@ uint32_t HAL_FSUSB_Receive_Data(uint8_t *buffer,uint32_t length,uint8_t ep_index
         if (single_packet)
         {
             return fifo_len;   
-        } 
+        }
         
-	}
+	}	
 
     return length;   
 } 
 
 
-//ep_indexï¿½ï¿½Ê¾ï¿½Ëµï¿½ï¿½ï¿½
+//ep_index±íÊ¾¶Ëµã±àºÅ
 void HAL_FSUSB_EP0_Send_Empty_Packet(void)
 {
 	HAL_FSUSB_Start_EP_Transfer(0,USB_EP0);    

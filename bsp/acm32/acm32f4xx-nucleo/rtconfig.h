@@ -10,7 +10,7 @@
 #define RT_ALIGN_SIZE 4
 #define RT_THREAD_PRIORITY_32
 #define RT_THREAD_PRIORITY_MAX 32
-#define RT_TICK_PER_SECOND 100
+#define RT_TICK_PER_SECOND 1000
 #define RT_USING_OVERFLOW_CHECK
 #define RT_USING_HOOK
 #define RT_HOOK_USING_FUNC_PTR
@@ -23,6 +23,7 @@
 
 /* kservice optimization */
 
+#define RT_KSERVICE_USING_STDLIB
 #define RT_DEBUG
 
 /* Inter-Thread communication */
@@ -43,11 +44,10 @@
 /* Kernel Device Object */
 
 #define RT_USING_DEVICE
-#define RT_USING_DEVICE_OPS
 #define RT_USING_CONSOLE
-#define RT_CONSOLEBUF_SIZE 256
+#define RT_CONSOLEBUF_SIZE 128
 #define RT_CONSOLE_DEVICE_NAME "uart2"
-#define RT_VER_NUM 0x40100
+#define RT_VER_NUM 0x40101
 
 /* RT-Thread Components */
 
@@ -64,7 +64,7 @@
 #define FINSH_USING_HISTORY
 #define FINSH_HISTORY_LINES 5
 #define FINSH_USING_SYMTAB
-#define FINSH_CMD_SIZE 256
+#define FINSH_CMD_SIZE 80
 #define MSH_USING_BUILT_IN_COMMANDS
 #define FINSH_USING_DESCRIPTION
 #define FINSH_ARG_MAX 10
@@ -76,60 +76,10 @@
 #define RT_USING_SERIAL_V1
 #define RT_SERIAL_USING_DMA
 #define RT_SERIAL_RB_BUFSZ 64
-#define RT_USING_CAN
-#define RT_USING_HWTIMER
-#define RT_USING_I2C
-#define RT_USING_I2C_BITOPS
 #define RT_USING_PIN
-#define RT_USING_ADC
-#define RT_USING_DAC
-#define RT_USING_PWM
-#define RT_USING_RTC
-#define RT_USING_ALARM
-#define RT_USING_SPI
-#define RT_USING_SFUD
-#define RT_SFUD_USING_SFDP
-#define RT_SFUD_USING_FLASH_INFO_TABLE
-#define RT_SFUD_SPI_MAX_HZ 20000000
-#define RT_USING_AUDIO
-#define RT_AUDIO_REPLAY_MP_BLOCK_SIZE 4096
-#define RT_AUDIO_REPLAY_MP_BLOCK_COUNT 2
-#define RT_AUDIO_RECORD_PIPE_SIZE 2048
-#define RT_USING_HWCRYPTO
-#define RT_HWCRYPTO_DEFAULT_NAME "hwcryto"
-#define RT_HWCRYPTO_IV_MAX_SIZE 16
-#define RT_HWCRYPTO_KEYBIT_MAX_SIZE 256
-#define RT_HWCRYPTO_USING_AES
-#define RT_HWCRYPTO_USING_AES_ECB
-#define RT_HWCRYPTO_USING_AES_CBC
-#define RT_HWCRYPTO_USING_SHA1
-#define RT_HWCRYPTO_USING_SHA2
-#define RT_HWCRYPTO_USING_SHA2_256
-#define RT_HWCRYPTO_USING_RNG
-#define RT_HWCRYPTO_USING_CRC
-#define RT_HWCRYPTO_USING_CRC_07
-#define RT_HWCRYPTO_USING_CRC_8005
-#define RT_HWCRYPTO_USING_CRC_1021
-#define RT_HWCRYPTO_USING_CRC_3D65
-#define RT_HWCRYPTO_USING_CRC_04C11DB7
 
 /* Using USB */
 
-#define RT_USING_USB
-#define RT_USING_USB_DEVICE
-#define RT_USBD_THREAD_STACK_SZ 4096
-#define USB_VENDOR_ID 0x0FFE
-#define USB_PRODUCT_ID 0x0002
-#define RT_USB_DEVICE_COMPOSITE
-#define RT_USB_DEVICE_CDC
-#define RT_USB_DEVICE_NONE
-#define RT_USB_DEVICE_MSTORAGE
-#define RT_VCOM_TASK_STK_SIZE 512
-#define RT_CDC_RX_BUFSIZE 128
-#define RT_VCOM_SERNO "32021919830108"
-#define RT_VCOM_SER_LEN 14
-#define RT_VCOM_TX_TIMEOUT 1000
-#define RT_USB_MSTORAGE_DISK_NAME "norflash"
 
 /* C/C++ and POSIX layer */
 
@@ -149,20 +99,6 @@
 
 /* Utilities */
 
-#define RT_USING_ULOG
-#define ULOG_OUTPUT_LVL_D
-#define ULOG_OUTPUT_LVL 7
-#define ULOG_USING_ISR_LOG
-#define ULOG_ASSERT_ENABLE
-#define ULOG_LINE_BUF_SIZE 128
-
-/* log format */
-
-#define ULOG_USING_COLOR
-#define ULOG_OUTPUT_TIME
-#define ULOG_OUTPUT_LEVEL
-#define ULOG_OUTPUT_TAG
-#define ULOG_BACKEND_USING_CONSOLE
 
 /* RT-Thread Utestcases */
 
@@ -201,12 +137,6 @@
 
 /* u8g2: a monochrome graphic library */
 
-#define PKG_USING_WAVPLAYER
-#define PKG_WP_USING_PLAY
-#define PKG_WP_PLAY_DEVICE "sound0"
-#define PKG_WP_USING_RECORD
-#define PKG_WP_RECORD_DEVICE "sound0"
-#define PKG_USING_WAVPLAYER_LATEST_VERSION
 
 /* PainterEngine: A cross-platform graphics application framework written in C language */
 
@@ -243,8 +173,6 @@
 
 /* entertainment: terminal games and other interesting software packages */
 
-#define PKG_USING_OPTPARSE
-#define PKG_USING_OPTPARSE_LATEST_VERSION
 
 /* Hardware Drivers Config */
 
@@ -269,8 +197,6 @@
 
 #define BSP_USING_UART1
 #define BSP_USING_UART2
-#define BSP_USING_RTC
-#define BSP_USING_ALARM
 
 /* Hardware I2C */
 
@@ -289,17 +215,9 @@
 
 /* Hardware SPI */
 
-#define BSP_USING_SPI1
-#define BSP_USING_SPI3
 
 /* Hardware CRYPTO */
 
-#define BSP_USING_CRC
-#define BSP_USING_AES
-#define BSP_USING_HRNG
-#define BSP_USING_SHA1
-#define BSP_USING_SHA256
-#define BSP_USING_USBD
 
 /* Board extended module Drivers */
 

@@ -28,7 +28,7 @@ void HAL_TIMEx_ConfigBreakDeadTime(TIM_HandleTypeDef *htim, TIM_BreakDeadTimeCon
     MODIFY_REG(break_deadtime_reg, TIM_BDTR_BKE, sBreakDeadTimeConfig->BreakState);
     MODIFY_REG(break_deadtime_reg, TIM_BDTR_BKP, sBreakDeadTimeConfig->BreakPolarity);
     MODIFY_REG(break_deadtime_reg, TIM_BDTR_AOE, sBreakDeadTimeConfig->AutomaticOutput);
-    MODIFY_REG(break_deadtime_reg, TIM_BDTR_BKF, (sBreakDeadTimeConfig->BreakFilter << TIM_BDTR_BKF_Pos));
+    MODIFY_REG(htim->Instance->CR1, TIM_CR1_BDTR_BKF, (sBreakDeadTimeConfig->BreakFilter << TIM_CR1_BDTR_BKF_Pos));
   
     /* Set TIMx_BDTR */
     htim->Instance->BDTR = break_deadtime_reg;  

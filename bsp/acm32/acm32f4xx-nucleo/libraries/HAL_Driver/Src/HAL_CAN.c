@@ -76,18 +76,6 @@ HAL_StatusTypeDef HAL_CAN_OperatingModeRequest(CAN_HandleTypeDef *hcan, uint8_t 
             status = HAL_OK;
         }
     }
-    else if(CAN_OperatingMode == CAN_OperatingMode_SelfTest)
-    {
-        hcan->Instance->MOD |= CAN_OperatingMode_SelfTest;  // enter Normal 
-        if((hcan->Instance->MOD & CAN_MOD_STM) != CAN_OperatingMode_SelfTest)
-        {
-            status = HAL_ERROR;
-        }
-        else
-        {
-            status = HAL_OK;
-        }
-    }
     else
     {
         status = HAL_ERROR;
@@ -300,9 +288,8 @@ HAL_StatusTypeDef HAL_CAN_Transmit(CAN_HandleTypeDef *hcan, CanTxRxMsg* TxMessag
         frame_header|=(CAN_RTR_Remote<<6);
     }
     hcan->Instance->DF.DATABUF[0]=frame_header;
-    // hcan->Instance->CMR = CAN_CMR_TR;  // transfer request
-    hcan->Instance->CMR = CAN_CMR_SRR;  // transfer request
-    while((hcan->Instance->SR & CAN_SR_TCS)==0x00); //wait for send ok
+    hcan->Instance->CMR = CAN_CMR_TR;  // transfer request
+    while((hcan->Instance->SR & CAN_SR_TCS)==0x00); //wait for send ok	
     return HAL_OK;
 }
 

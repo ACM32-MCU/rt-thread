@@ -194,7 +194,7 @@ void HAL_RTC_AlarmConfig(RTC_AlarmTypeDef *fp_Alarm)
     }
     else 
     {
-        lu32_WeekDay = fp_Alarm->u32_AlarmDay<<24;
+        lu32_WeekDay = fp_Alarm->u32_AlarmDay << RTC_ALARM_DAY_BIT_POSITION;
     }
 
     /* Coinfig Week/Day¡¢Hour¡¢Min¡¢Sec */
@@ -206,11 +206,11 @@ void HAL_RTC_AlarmConfig(RTC_AlarmTypeDef *fp_Alarm)
         RTC->IE |= RTC_IE_ALM;
     }
 
-    RTC->CR |= (fp_Alarm->u32_DayMask) ? RTC_ALARM_DAY_MASK_ENABLE : RTC_ALARM_DAY_MASK_DISABLE;
-
-    RTC->CR |= (fp_Alarm->u32_HourMask) ? RTC_ALARM_HOUR_MASK_ENABLE : RTC_ALARM_HOUR_MASK_DISABLE;
-
-    RTC->CR |= (fp_Alarm->u32_MinMask) ? RTC_ALARM_MIN_MASK_ENABLE : RTC_ALARM_MIN_MASK_DISABLE;
+    MODIFY_REG(RTC->CR, RTC_CR_ALM_MKSD, fp_Alarm->u32_DayMask); 
+    
+    MODIFY_REG(RTC->CR, RTC_CR_ALM_MSKH, fp_Alarm->u32_HourMask); 
+    
+    MODIFY_REG(RTC->CR, RTC_CR_ALM_MSKM, fp_Alarm->u32_MinMask); 
 }
 
 /*********************************************************************************

@@ -310,4 +310,7 @@ HAL_StatusTypeDef HAL_UART_Transmit_DMA(UART_HandleTypeDef *huart, uint8_t *fu8_
 /* HAL_UART_Receive_DMA */
 HAL_StatusTypeDef HAL_UART_Receive_DMA(UART_HandleTypeDef *huart, uint8_t *fu8_Data, uint32_t fu32_Size);
 
+/* HAL_UART_Enable_Disable_FIFO */
+HAL_StatusTypeDef HAL_UART_Enable_Disable_FIFO(UART_HandleTypeDef *huart, FUNC_DISABLE_ENABLE enable_disable);  
+
 #endif

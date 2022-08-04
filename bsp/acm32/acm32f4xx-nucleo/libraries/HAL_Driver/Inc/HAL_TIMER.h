@@ -188,6 +188,10 @@
 #define HAL_TIM_DISABLE_DMA(__HANDLE__, __DMA_REQ__)   ((__HANDLE__)->Instance->DIER &= ~(__DMA_REQ__))  
 
 
+#define TIM_CR1_BDTR_BKF_Pos      (10U)
+#define TIM_CR1_BDTR_BKF_Msk      (0xFUL << TIM_CR1_BDTR_BKF_Pos)                  /*!< 0x000F0000 */
+#define TIM_CR1_BDTR_BKF          TIM_CR1_BDTR_BKF_Msk        
+
 
 #define TIM_CR2_CCPC_Pos          (0U)
 #define TIM_CR2_CCPC_Msk          (0x1UL << TIM_CR2_CCPC_Pos)                  
@@ -488,9 +492,7 @@ extern uint32_t HAL_TIMER_Base_Init(TIM_HandleTypeDef * htim);
 /* HAL_TIMER_Output_Config */ 
 extern uint32_t HAL_TIMER_Output_Config(TIM_TypeDef *TIMx, TIM_OC_InitTypeDef * Output_Config, uint32_t Channel);     
 /* HAL_TIMER_Base_Start */ 
-extern void HAL_TIMER_Base_Start(TIM_TypeDef *TIMx);
-/* HAL_TIMER_Base_Stop */
-extern HAL_StatusTypeDef HAL_TIMER_Base_Stop(TIM_TypeDef *TIMx);
+extern void HAL_TIMER_Base_Start(TIM_TypeDef *TIMx);    
 /* HAL_TIM_PWM_Output_Start */ 
 extern uint32_t HAL_TIM_PWM_Output_Start(TIM_TypeDef *TIMx, uint32_t Channel);   
 /* HAL_TIM_PWM_Output_Stop */    

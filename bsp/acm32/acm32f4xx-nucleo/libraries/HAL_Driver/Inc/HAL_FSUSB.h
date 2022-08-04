@@ -31,10 +31,10 @@
 //#define     EPX_MAX_PACKET_SIZE_HS     512
 //#define     EPX_MAX_PACKET_SIZE_FS     64
 
-#define     MASK_EPX_IN(x)		(1<<(6+3*(x)))   
-#define     MASK_EPX_OUT(x)     (1<<(7+3*(x)))   
-#define     MASK_EPX_ACK(x)     (1<<(8+3*(x))) 
-#define     MASK_EPX_TIMEOUT(x) (1<< (25+(x)))
+#define     MASK_EPX_IN(x)		(1<<(6+3*x))   
+#define     MASK_EPX_OUT(x)     (1<<(7+3*x))   
+#define     MASK_EPX_ACK(x)     (1<<(8+3*x)) 
+#define     MASK_EPX_TIMEOUT(x) (1<< (25+x))
 
 typedef __PACKED_STRUCT _device_request
 {
@@ -97,7 +97,7 @@ void HAL_FSUSB_EP0_Send_Empty_Packet(void);
 void HAL_FSUSB_EP0_Send_Stall(void);    
 void usb_clear_stall(uint8_t ep_index, uint8_t ep_dir);  
 void usb_send_stall(uint8_t ep_index, uint8_t ep_dir);
-uint16_t HAL_FSUSB_Get_FIFO_Length(uint8_t ep_index);
+uint16_t HAL_FSUSB_Get_FIFO_Length(uint8_t ep_index);     
 
 void HAL_FSUSB_Enable_Interrupt(uint32_t Interrupt);    
 void HAL_FSUSB_Disable_Interrupt(uint32_t Interrupt);   
