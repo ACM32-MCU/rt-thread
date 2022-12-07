@@ -1,0 +1,24 @@
+Import('RTT_ROOT')
+Import('rtconfig')
+from building import *
+
+cwd = GetCurrentDir()
+src = Glob('*.c')
+CPPPATH = [cwd]
+
+#remove other no use files
+#SrcRemove(src, '*.c')
+
+src = src + ['Templates/system_acm32g103.c']
+if rtconfig.PLATFORM in ['gcc']:
+    src = src + ['Templates/GCC/startup_acm32g103.s']
+elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+    src = src + ['Templates/ARM/startup_acm32g103.s']
+elif rtconfig.PLATFORM in ['iccarm']:
+    src = src + ['Templates/IAR/startup_acm32g103.s']
+
+
+group = DefineGroup('Board', src, depend = [''], CPPPATH = CPPPATH)
+
+Return('group')
+
